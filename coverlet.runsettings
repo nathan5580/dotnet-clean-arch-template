@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>0</MaxCpuCount>
+  </RunConfiguration>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura,json,opencover</Format>
+          <ExcludeByAttribute>GeneratedCodeAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+          <ExcludeByFile>**/*.g.cs,**/*.Designer.cs</ExcludeByFile>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+          <SingleHit>false</SingleHit>
+          <ModulePaths>
+            <Exclude>
+              <ModulePath>.*xunit.*</ModulePath>
+              <ModulePath>.*Microsoft\.Test\.Sdk.*</ModulePath>
+              <ModulePath>.*Moq.*</ModulePath>
+              <ModulePath>.*coverlet.*</ModulePath>
+            </Exclude>
+          </ModulePaths>
+          <Attributes>
+            <Exclude>
+              <Attribute>System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute</Attribute>
+              <Attribute>System.CodeDom.Compiler.GeneratedCodeAttribute</Attribute>
+            </Exclude>
+          </Attributes>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

@@ -1,0 +1,17 @@
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.IdentityModel.Tokens;
+global using Api.Authorization;
+global using Api.Controllers;
+global using Api.Extensions;
+global using Api.Middleware;
+global using Api.OpenApi;
+global using Databases.Core;
+global using Shared.Jobs;
+global using Shared.Mapping;
+global using Shared.Resources;
+global using Shared.Resources.Enums;
+global using Shared.Resources.HTTP;
+global using Shared.Services;

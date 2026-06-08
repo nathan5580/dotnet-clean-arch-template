@@ -1,0 +1,43 @@
+@namespace Web.Components.Surface
+
+<div class="meta-panel @CssClass">
+    @if (!string.IsNullOrEmpty(Kicker))
+    {
+        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">@Kicker</p>
+    }
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <h2 class="text-lg font-semibold text-gray-900 mb-1">@Title</h2>
+    }
+    @if (!string.IsNullOrEmpty(Description))
+    {
+        <p class="text-sm text-gray-500 mb-4">@Description</p>
+    }
+    @if (!string.IsNullOrEmpty(Error))
+    {
+        <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <p class="text-sm text-red-600">@Error</p>
+            @if (OnRetry is not null)
+            {
+                <button class="meta-btn meta-btn-secondary mt-2 text-sm" @onclick="OnRetry">Retry</button>
+            }
+        </div>
+    }
+    @if (Body is not null)
+    {
+        @Body
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string? Kicker { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public string? Empty { get; set; }
+    [Parameter] public RenderFragment? Body { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnRetry { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+}

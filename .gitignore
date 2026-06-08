@@ -1,0 +1,72 @@
+## .NET
+bin/
+**/bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Bb]uild[Ll]og.*
+
+## IDE
+.idea/
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+*.DotSettings.user
+*.sln.iml
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Logs
+logs/
+*.log
+
+## Secrets
+appsettings.*.local.json
+*.pfx
+*.pem
+.env*
+
+## Blazor WASM publish
+Applications/Web/wwwroot/_framework/
+
+## EF Migrations local snapshots
+*.db
+*.db-shm
+*.db-wal
+
+## Node
+node_modules/
+
+## Test results
+TestResults/
+coverage/
+*.trx
+*.coveragexml
+**/test-results/
+**/test-report/
+**/playwright-report/

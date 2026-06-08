@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.git/
+**/.idea/
+**/.vs/
+**/.vscode/
+**/logs/
+**/TestResults/
+**/.env*
+*.user
+*.suo
+*.DotSettings.user

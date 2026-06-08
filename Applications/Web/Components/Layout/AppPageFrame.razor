@@ -1,0 +1,29 @@
+@namespace Web.Components.Layout
+
+<div class="app-page @GetWidthClass()">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <h1 class="text-2xl font-bold text-gray-900 mb-1">@Title</h1>
+    }
+    @if (!string.IsNullOrEmpty(Subtitle))
+    {
+        <p class="text-gray-500 mb-6">@Subtitle</p>
+    }
+    <div class="app-page-body">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Width { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string GetWidthClass() => Width switch
+    {
+        "Narrow" => "max-w-lg",
+        "Medium" => "max-w-2xl",
+        _ => "max-w-7xl"
+    };
+}

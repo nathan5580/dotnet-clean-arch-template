@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Applications/">
+    <Project Path="Applications/Api/Api.csproj" />
+    <Project Path="Applications/Web/Web.csproj" />
+  </Folder>
+  <Folder Name="/Databases/">
+    <Project Path="Databases/Auth/Auth.csproj" />
+    <Project Path="Databases/Core/Core.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/Jobs/Jobs.csproj" />
+    <Project Path="Shared/Mapping/Mapping.csproj" />
+    <Project Path="Shared/Resources/Resources.csproj" />
+    <Project Path="Shared/Services/Services.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Api.Tests/Api.Tests.csproj" />
+    <Project Path="Tests/Shared.Tests/Shared.Tests.csproj" />
+    <Project Path="Tests/Web.Tests/Web.Tests.csproj" />
+  </Folder>
+</Solution>

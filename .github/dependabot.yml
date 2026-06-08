@@ -1,0 +1,77 @@
+version: 2
+
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+      timezone: "Europe/Luxembourg"
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - nuget
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      dotnet-runtime:
+        patterns:
+          - "Microsoft.AspNetCore*"
+          - "Microsoft.Extensions*"
+          - "Microsoft.NET.Test.Sdk"
+          - "System.*"
+      ef-core:
+        patterns:
+          - "Microsoft.EntityFrameworkCore*"
+      observability:
+        patterns:
+          - "Serilog*"
+          - "Scalar.AspNetCore"
+      testing:
+        patterns:
+          - "xunit*"
+          - "Moq*"
+          - "coverlet*"
+      infrastructure:
+        patterns:
+          - "Asp.Versioning*"
+          - "FluentValidation*"
+          - "Quartz*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:30"
+      timezone: "Europe/Luxembourg"
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/Applications/Web"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Luxembourg"
+    labels:
+      - dependencies
+      - frontend
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"

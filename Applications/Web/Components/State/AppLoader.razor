@@ -1,0 +1,19 @@
+@namespace Web.Components.State
+
+<div class="meta-loader">
+    @if (!string.IsNullOrEmpty(Text))
+    {
+        <div class="text-center">
+            <div class="meta-loader-spinner mx-auto mb-3"></div>
+            <p class="text-sm text-gray-500">@Text</p>
+        </div>
+    }
+    else
+    {
+        <div class="meta-loader-spinner"></div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Text { get; set; }
+}

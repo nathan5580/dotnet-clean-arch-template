@@ -1,0 +1,11 @@
+@namespace Web.Components
+
+@inject NavigationManager Navigation
+@inject IToastService ToastService
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo("/login");
+    }
+}

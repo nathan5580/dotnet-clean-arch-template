@@ -1,0 +1,20 @@
+@page "/login"
+@inject NavigationManager Navigation
+
+<PageTitle>Login - {{ProjectName}}</PageTitle>
+
+<AppPageFrame Title="Login" Width="Narrow">
+    <MetaPanel Title="Sign in to your account">
+        <div class="space-y-4">
+            <div>
+                <label class="meta-field-label">Email</label>
+                <input type="email" class="meta-input" placeholder="you@example.com" />
+            </div>
+            <div>
+                <label class="meta-field-label">Password</label>
+                <input type="password" class="meta-input" placeholder="••••••••" />
+            </div>
+            <button class="meta-btn meta-btn-primary w-full">Sign in</button>
+        </div>
+    </MetaPanel>
+</AppPageFrame>

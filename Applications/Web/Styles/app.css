@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* Design tokens — use these for brand theming */
+:root {
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --accent-500: #f59e0b;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --bg-surface: #ffffff;
+  --bg-page: #f9fafb;
+  --border-color: #e5e7eb;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+/* Component classes */
+@layer components {
+  .meta-panel {
+    @apply bg-white border border-gray-200 rounded-lg p-6 shadow-sm;
+  }
+
+  .meta-btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .meta-btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  }
+
+  .meta-btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+  }
+
+  .meta-input {
+    @apply block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500;
+  }
+
+  .meta-field-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .meta-loader {
+    @apply flex items-center justify-center py-12;
+  }
+
+  .meta-loader-spinner {
+    @apply w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin;
+  }
+
+  .meta-empty {
+    @apply text-center py-12 text-gray-500;
+  }
+}
+
+/* App loading state */
+.app-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #6b7280;
+  font-family: 'Inter', sans-serif;
+}
+
+.loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

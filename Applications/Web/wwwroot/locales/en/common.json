@@ -1,0 +1,13 @@
+{
+  "success": "Success",
+  "error.generic": "An error occurred. Please try again.",
+  "cancel": "Cancel",
+  "save": "Save",
+  "retry": "Retry",
+  "loading": "Loading...",
+  "previous": "Previous",
+  "next": "Next",
+  "search": "Search",
+  "noResults": "No results found.",
+  "close": "Close"
+}

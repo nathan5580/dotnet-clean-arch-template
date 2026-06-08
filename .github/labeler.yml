@@ -1,0 +1,36 @@
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - Applications/Api/**
+          - Shared/**
+          - Databases/**
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - Applications/Web/**
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - Applications/Api/**/Auth*/**
+          - Shared/Services/Auth/**
+          - Databases/Auth/**
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - Tests/**
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.csproj'
+          - Applications/Web/package.json
+          - Applications/Web/package-lock.json
+          - .github/dependabot.yml
