@@ -19,7 +19,7 @@ public record ApiResponse<T> : ApiResponse
     public T? Data { get; init; }
     public string? Token { get; init; }
 
-    public static ApiResponse<T> Success(T data, string? token = null)
+    public static ApiResponse<T> Ok(T data, string? token = null)
         => new() { Success = true, Data = data, Token = token, StatusCode = 200 };
 
     public static ApiResponse<T> Created(T data, string? token = null)

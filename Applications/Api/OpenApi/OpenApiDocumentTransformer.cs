@@ -1,4 +1,5 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
 
 namespace Api.OpenApi;
 

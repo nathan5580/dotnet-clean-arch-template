@@ -15,6 +15,9 @@ public static class ServiceExtensions
 {
     public static void AddAppServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        // Register external EF configuration assemblies before AddDbContext
+        AppDbContext.ExtraConfigurationAssemblies.Add(typeof(Databases.Auth.UserConfiguration).Assembly);
+
         // Database
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
@@ -32,7 +35,7 @@ public static class ServiceExtensions
             new MapperConfiguration(cfg =>
             {
                 cfg.AddMaps(typeof(AuthMappingProfile).Assembly);
-            }).CreateMapper());
+            }, sp.GetRequiredService<ILoggerFactory>()).CreateMapper());
 
         // Scoped services
         services.AddScoped<IAuthService, AuthService>();

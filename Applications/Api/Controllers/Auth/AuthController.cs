@@ -38,7 +38,7 @@ public sealed class AuthController(IAuthService authService, IAuthMapper authMap
     {
         var (user, token) = await authService.Login(request, ct);
         var me = authMapper.ToGetMe(user);
-        return Ok(ApiResponse<GetMe>.Success(me, token));
+        return Ok(ApiResponse<GetMe>.Ok(me, token));
     }
 
     [HttpGet("me")]
@@ -52,6 +52,6 @@ public sealed class AuthController(IAuthService authService, IAuthMapper authMap
             throw new UnauthorizedAccessException("User not found.");
 
         var me = authMapper.ToGetMe(user);
-        return Ok(ApiResponse<GetMe>.Success(me));
+        return Ok(ApiResponse<GetMe>.Ok(me));
     }
 }

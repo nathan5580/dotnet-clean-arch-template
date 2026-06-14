@@ -13,7 +13,7 @@ public sealed class AuthMapperTests
         var configuration = new MapperConfiguration(cfg =>
         {
             cfg.AddProfile<AuthMappingProfile>();
-        });
+        }, NullLoggerFactory.Instance);
         configuration.AssertConfigurationIsValid();
 
         var mapper = configuration.CreateMapper();

@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Resources\Resources.csproj" />
+    <ProjectReference Include="..\..\Databases\Core\Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

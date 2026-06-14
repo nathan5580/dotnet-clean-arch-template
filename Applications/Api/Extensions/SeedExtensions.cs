@@ -22,7 +22,8 @@ public static class SeedExtensions
         }
         catch (Exception ex)
         {
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger(nameof(SeedExtensions));
             logger.LogWarning(ex, "Database seeding skipped — DB may not be ready yet.");
         }
     }

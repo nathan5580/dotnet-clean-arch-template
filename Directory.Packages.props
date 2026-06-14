@@ -37,7 +37,7 @@
     <PackageVersion Include="Asp.Versioning.Mvc" Version="10.0.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.14.2" />
     <!-- Mapping -->
-    <PackageVersion Include="AutoMapper" Version="14.0.1" />
+    <PackageVersion Include="AutoMapper" Version="16.1.1" />
     <!-- Jobs -->
     <PackageVersion Include="Quartz" Version="3.18.1" />
     <PackageVersion Include="Quartz.Extensions.DependencyInjection" Version="3.18.1" />

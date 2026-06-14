@@ -9,7 +9,7 @@ public sealed class ApplicationUser : IdentityUser
     public bool IsActive { get; set; } = true;
 
     [NotMapped]
-    public Guid Id
+    public new Guid Id
     {
         get => Guid.Parse(base.Id);
         set => base.Id = value.ToString();
@@ -19,7 +19,7 @@ public sealed class ApplicationUser : IdentityUser
 public sealed class ApplicationRole : IdentityRole
 {
     [NotMapped]
-    public Guid Id
+    public new Guid Id
     {
         get => Guid.Parse(base.Id);
         set => base.Id = value.ToString();

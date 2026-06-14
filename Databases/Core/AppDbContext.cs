@@ -2,11 +2,18 @@ using Databases.Core.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace Databases.Core;
 
 public sealed class AppDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
 {
+    /// <summary>
+    /// Additional assemblies to scan for IEntityTypeConfiguration implementations.
+    /// Register external configuration assemblies here before AddDbContext is called.
+    /// </summary>
+    public static readonly List<Assembly> ExtraConfigurationAssemblies = [];
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<UserActionAudit> UserActionAudits => Set<UserActionAudit>();
@@ -18,6 +25,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, Applicatio
 
         // Load per-context configurations
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-        builder.ApplyConfigurationsFromAssembly(typeof(Databases.Auth.UserConfiguration).Assembly);
+        foreach (var assembly in ExtraConfigurationAssemblies)
+            builder.ApplyConfigurationsFromAssembly(assembly);
     }
 }
