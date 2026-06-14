@@ -12,7 +12,7 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
     }
 
     [Fact]
-    public async Task GetHealth_Returns200()
+    public async Task GetHealth_WhenCalled_Returns200()
     {
         var response = await _client.GetAsync("/api/health");
         response.EnsureSuccessStatusCode();

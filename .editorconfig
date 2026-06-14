@@ -40,6 +40,8 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggest
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_diagnostic.IDE0040.severity = warning
+csharp_style_namespace_declarations = file_scoped:error
+dotnet_diagnostic.IDE0161.severity = error
 # Mapperly: ApplicationUser has many Identity members we intentionally don't map
 dotnet_diagnostic.RMG020.severity = none
 

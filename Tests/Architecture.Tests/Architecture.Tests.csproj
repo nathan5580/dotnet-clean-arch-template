@@ -14,6 +14,8 @@
     <ProjectReference Include="..\..\Shared\Resources\Resources.csproj" />
     <ProjectReference Include="..\..\Shared\Mapping\Mapping.csproj" />
     <ProjectReference Include="..\..\Shared\Jobs\Jobs.csproj" />
+    <ProjectReference Include="..\Shared.Tests\Shared.Tests.csproj" />
+    <ProjectReference Include="..\Api.Tests\Api.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>
