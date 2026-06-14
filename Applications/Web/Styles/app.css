@@ -51,6 +51,19 @@
   .meta-empty {
     @apply text-center py-12 text-gray-500;
   }
+
+  .app-nav-link {
+    @apply text-gray-500 hover:text-gray-900 transition-colors;
+  }
+
+  .app-nav-link-active {
+    @apply text-gray-900 font-semibold;
+  }
+
+  .app-table th,
+  .app-table td {
+    @apply align-middle;
+  }
 }
 
 /* App loading state */

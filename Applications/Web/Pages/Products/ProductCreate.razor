@@ -1,0 +1,47 @@
+@page "/products/new"
+@namespace Web.Pages.Products
+
+<PageTitle>@T("create.heading") - {{ProjectName}}</PageTitle>
+
+<AppPageFrame Title="@T("create.heading")" Subtitle="@T("create.subtitle")" Width="Medium">
+    @if (_loading)
+    {
+        <AppLoader Text="@T("create.heading")" />
+    }
+    else
+    {
+        <MetaPanel Error="@_error">
+            <ChildContent>
+                <div class="space-y-4">
+                    <div>
+                        <label class="meta-field-label">@T("create.name")</label>
+                        <input class="meta-input" @bind="_name" />
+                    </div>
+                    <div>
+                        <label class="meta-field-label">@T("create.description")</label>
+                        <textarea class="meta-input" rows="3" @bind="_description"></textarea>
+                    </div>
+                    <div>
+                        <label class="meta-field-label">@T("create.price")</label>
+                        <input class="meta-input" type="number" step="0.01" min="0" @bind="_price" />
+                    </div>
+                    <div>
+                        <label class="meta-field-label">@T("create.category")</label>
+                        <select class="meta-input" @bind="_category">
+                            @foreach (var category in Categories)
+                            {
+                                <option value="@category">@category</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="meta-btn meta-btn-primary" @onclick="Submit" disabled="@_submitting">
+                            @T("create.submit")
+                        </button>
+                        <button class="meta-btn meta-btn-secondary" @onclick="Cancel">@T("create.cancel")</button>
+                    </div>
+                </div>
+            </ChildContent>
+        </MetaPanel>
+    }
+</AppPageFrame>

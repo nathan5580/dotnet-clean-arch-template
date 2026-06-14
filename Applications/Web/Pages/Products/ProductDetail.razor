@@ -1,0 +1,50 @@
+@page "/products/{ProductId:guid}"
+@namespace Web.Pages.Products
+
+<PageTitle>@T("detail.heading") - {{ProjectName}}</PageTitle>
+
+<AppPageFrame Title="@(_product?.Name ?? T("detail.heading"))" Width="Medium">
+    <div class="mb-4">
+        <button class="meta-btn meta-btn-secondary text-sm" @onclick="GoBack">@T("detail.back")</button>
+    </div>
+
+    @if (_loading)
+    {
+        <AppLoader Text="@T("detail.loading")" />
+    }
+    else if (_error is not null)
+    {
+        <MetaPanel Error="@_error" OnRetry="Load" />
+    }
+    else if (_product is not null)
+    {
+        <MetaPanel Title="@_product.Name">
+            <ChildContent>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="meta-field-label">@T("detail.description")</dt>
+                        <dd class="text-sm text-gray-700">@(_product.Description ?? "-")</dd>
+                    </div>
+                    <div>
+                        <dt class="meta-field-label">@T("detail.category")</dt>
+                        <dd class="text-sm text-gray-700">@_product.Category</dd>
+                    </div>
+                    <div>
+                        <dt class="meta-field-label">@T("detail.price")</dt>
+                        <dd class="text-sm text-gray-700">@_product.Price.ToString("C")</dd>
+                    </div>
+                    <div>
+                        <dt class="meta-field-label">@T("detail.status")</dt>
+                        <dd class="text-sm text-gray-700">
+                            @(_product.IsActive ? T("status.active") : T("status.inactive"))
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="meta-field-label">@T("detail.created")</dt>
+                        <dd class="text-sm text-gray-700">@_product.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                    </div>
+                </dl>
+            </ChildContent>
+        </MetaPanel>
+    }
+</AppPageFrame>

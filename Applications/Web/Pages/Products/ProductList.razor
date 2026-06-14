@@ -1,0 +1,64 @@
+@page "/products"
+@namespace Web.Pages.Products
+
+<PageTitle>@T("list.heading") - {{ProjectName}}</PageTitle>
+
+<AppPageFrame Title="@T("list.heading")" Subtitle="@T("list.subtitle")">
+    <div class="flex justify-end mb-4">
+        <button class="meta-btn meta-btn-primary" @onclick="GoToCreate">@T("list.create")</button>
+    </div>
+
+    @if (_loading)
+    {
+        <AppLoader Text="@T("list.loading")" />
+    }
+    else if (_error is not null)
+    {
+        <MetaPanel Error="@_error" OnRetry="Load" />
+    }
+    else if (_products.Count == 0)
+    {
+        <MetaPanel>
+            <ChildContent>
+                <p class="meta-empty">@T("list.empty")</p>
+            </ChildContent>
+        </MetaPanel>
+    }
+    else
+    {
+        <MetaPanel>
+            <ChildContent>
+                <table class="app-table w-full text-left">
+                    <thead>
+                        <tr class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            <th class="py-2">@T("list.colName")</th>
+                            <th class="py-2">@T("list.colCategory")</th>
+                            <th class="py-2">@T("list.colPrice")</th>
+                            <th class="py-2">@T("list.colStatus")</th>
+                            <th class="py-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in _products)
+                        {
+                            <tr class="border-t border-gray-100">
+                                <td class="py-2 font-medium text-gray-900">@product.Name</td>
+                                <td class="py-2 text-gray-600">@product.Category</td>
+                                <td class="py-2 text-gray-600">@product.Price.ToString("C")</td>
+                                <td class="py-2 text-gray-600">
+                                    @(product.IsActive ? T("status.active") : T("status.inactive"))
+                                </td>
+                                <td class="py-2 text-right">
+                                    <button class="meta-btn meta-btn-secondary text-sm"
+                                            @onclick="() => GoToDetail(product.ProductId)">
+                                        @T("list.viewDetail")
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </ChildContent>
+        </MetaPanel>
+    }
+</AppPageFrame>

@@ -2,8 +2,12 @@
 
 <CascadingAuthenticationState>
     <div class="app-layout">
-        <header class="bg-white border-b border-gray-200 px-6 py-4">
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h1 class="text-lg font-semibold text-gray-900">{{ProjectName}}</h1>
+            <nav class="flex items-center gap-4 text-sm">
+                <NavLink href="" Match="NavLinkMatch.All" class="app-nav-link" ActiveClass="app-nav-link-active">Home</NavLink>
+                <NavLink href="products" class="app-nav-link" ActiveClass="app-nav-link-active">Products</NavLink>
+            </nav>
         </header>
         <main class="max-w-7xl mx-auto px-4 py-8">
             @Body
