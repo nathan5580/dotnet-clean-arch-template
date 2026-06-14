@@ -39,4 +39,25 @@ public sealed class SourceRulesTests
             Assert.True(blockScoped.Count == 0, $"{path} uses a block-scoped namespace. Use file-scoped (namespace X;).");
         }
     }
+
+    [Fact]
+    public void LibraryAwaits_Use_ConfigureAwaitFalse()
+    {
+        var libraryFiles = SourceFiles.InProject("Shared").Concat(SourceFiles.InProject("Databases"));
+
+        foreach (var path in libraryFiles)
+        {
+            var root = SourceFiles.Parse(path);
+
+            foreach (var awaitExpr in root.DescendantNodes().OfType<AwaitExpressionSyntax>())
+            {
+                var ok = awaitExpr.Expression is InvocationExpressionSyntax inv
+                    && inv.Expression is MemberAccessExpressionSyntax member
+                    && member.Name.Identifier.Text == "ConfigureAwait";
+
+                var line = awaitExpr.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
+                Assert.True(ok, $"{path}: await at line {line} must use .ConfigureAwait(false).");
+            }
+        }
+    }
 }

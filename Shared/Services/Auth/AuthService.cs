@@ -19,7 +19,7 @@ public sealed class AuthService(
 {
     public async Task<(ApplicationUser User, string Token)> Register(PostAuthRegisterRequest request, CancellationToken ct)
     {
-        var existingUser = await userManager.FindByEmailAsync(request.Email);
+        var existingUser = await userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
         if (existingUser is not null)
             throw new InvalidOperationException("Email is already registered.");
 
@@ -31,7 +31,7 @@ public sealed class AuthService(
             IsActive = true
         };
 
-        var result = await userManager.CreateAsync(user, request.Password);
+        var result = await userManager.CreateAsync(user, request.Password).ConfigureAwait(false);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
