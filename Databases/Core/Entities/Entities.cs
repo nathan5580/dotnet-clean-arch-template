@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Databases.Core.Entities;
 
-public sealed class ApplicationUser : IdentityUser
+public class ApplicationUser : IdentityUser
 {
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
@@ -16,7 +16,7 @@ public sealed class ApplicationUser : IdentityUser
     }
 }
 
-public sealed class ApplicationRole : IdentityRole
+public class ApplicationRole : IdentityRole
 {
     [NotMapped]
     public new Guid Id
@@ -26,7 +26,7 @@ public sealed class ApplicationRole : IdentityRole
     }
 }
 
-public sealed class UserActionAudit
+public class UserActionAudit
 {
     public Guid AuditId { get; set; }
     public string UserId { get; set; } = string.Empty;

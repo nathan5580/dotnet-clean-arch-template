@@ -15,7 +15,7 @@ namespace Api.Controllers.Auth;
 [Tags(OpenApiTagNames.Auth)]
 [Route("api/auth")]
 [Produces("application/json")]
-public sealed class AuthController(IAuthService authService, IAuthMapper authMapper, UserManager<ApplicationUser> userManager) : ControllerBase
+public class AuthController(IAuthService authService, IAuthMapper authMapper, UserManager<ApplicationUser> userManager) : ControllerBase
 {
     [HttpPost("register")]
     [ProducesResponseType(typeof(ApiResponse<GetMe>), StatusCodes.Status201Created)]
