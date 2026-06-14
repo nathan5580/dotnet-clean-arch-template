@@ -41,6 +41,7 @@ public GetMe ToGetMe(ApplicationUser user)
 | Mapper (`[Mapper]` sealed partial — Mapperly) | `Shared/Mapping/{Context}/` |
 | EF config (`IEntityTypeConfiguration`) | `Databases/{Context}/` |
 | Entity (not sealed) | `Databases/Core/Entities/` |
+| Domain enum (shared) | `Shared/Resources/Enums/` — entity + HTTP records share it; DB stores string (`HasConversion<string>`), JSON string (`JsonStringEnumConverter`) |
 
 ## HTTP / EF / Tests
 

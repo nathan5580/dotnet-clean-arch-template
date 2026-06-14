@@ -72,6 +72,7 @@ A single deployable: an **ASP.NET Core 10 Web API** (`Api`) that co-hosts a **Bl
 ├── Databases/
 │   ├── Core/                         # AppDbContext, Entities, Enums
 │   ├── Auth/                         # Identity EF configuration
+│   ├── Catalog/                      # Product EF config — the worked showcase context
 │   └── ...per-context config projects
 ├── Shared/
 │   ├── Resources/                    # HTTP models (records), enums, FluentValidation validators
@@ -167,7 +168,8 @@ Enforced by `Tests/Architecture.Tests` (Roslyn). `dotnet format` does not add th
 
 ### EF Core
 
-- Singular table names; per-context schemas (`Auth.User`, `Widget.Widget`). Enum properties `HasConversion<string>()`.
+- Singular table names; per-context schemas (`Auth.User`, `Catalog.Product`). Enum properties `HasConversion<string>()` (DB stores the name).
+- **Domain enums** live in `Shared/Resources/Enums` so both entities (`Databases.Core` references `Shared.Resources`) and HTTP records share one type; JSON serializes them as names via `JsonStringEnumConverter` (registered in `ServiceExtensions`). The `Catalog`/`Product` context is the worked end-to-end example of the whole recipe.
 - `.AsSplitQuery()` for multiple collection includes; `.Select()` projections for read queries; decimal precision always specified.
 - Constraint naming: `PK-Schema_Table_Column`, `FK-Schema_Table_Src_Dst`, `IX-Schema_Table_Column`.
 

@@ -27,7 +27,7 @@
 │   └── Web/                          # Blazor WASM 10 — Tailwind v4, i18n, co-hosted
 ├── Databases/
 │   ├── Core/                         # AppDbContext, starter entities, PK pattern, enums
-│   └── Auth/  …per-context           # EF Core IEntityTypeConfiguration<T> per bounded context
+│   ├── Auth/  Catalog/  …per-context  # EF Core IEntityTypeConfiguration<T> per bounded context
 ├── Shared/
 │   ├── Resources/                    # HTTP models (records), FluentValidation validators, enums
 │   ├── Services/                     # Business logic — sealed, primary ctors, verb-first
@@ -49,7 +49,7 @@
 ## What's Inside
 
 ### Build & infrastructure
-- `.slnx` solution (modern XML format) — 12 projects organized in 4 folders
+- `.slnx` solution (modern XML format) — 13 projects organized in 4 folders
 - `Directory.Build.props` — net10.0, Nullable, TreatWarningsAsErrors
 - `Directory.Packages.props` — **central package management**, 40+ NuGet packages pinned
 - `.editorconfig` — naming rules (`_underscore` fields, `I` prefix interfaces), var preferences, code styles
@@ -150,6 +150,8 @@ dotnet test                                  # 4 test projects, convention tests
 ---
 
 ## Adding Your First Bounded Context
+
+> The template ships a complete **Products** (`Catalog`) context as a worked example — entity + shared enum, EF config, records, validators, Mapperly mapper, `ProductService` CRUD, an authed `ProductsController`, Blazor list/detail/create pages, a migration, and tests. Copy it as your starting point; the steps below are the same shape.
 
 ```
 1. Databases/Core/Entities/YourEntity.cs           Entity with PK pattern
