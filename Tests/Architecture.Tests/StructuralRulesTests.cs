@@ -56,6 +56,28 @@ public sealed class StructuralRulesTests
     }
 
     [Fact]
+    public void Controllers_Concrete_InheritAuthenticatedControllerOrAreAllowListed()
+    {
+
+        // Authenticated controllers must derive from AuthenticatedController so they
+        // pick up [Authorize] + CurrentUserId. Public controllers are explicitly allow-listed.
+        var allowList = new[] { typeof(Api.Controllers.Auth.AuthController) };
+
+        var concreteControllers = ApiAssembly.GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && t.Name.EndsWith("Controller"));
+
+        foreach (var type in concreteControllers)
+        {
+            if (allowList.Contains(type))
+                continue;
+
+            Assert.True(typeof(Api.Authorization.AuthenticatedController).IsAssignableFrom(type),
+                $"{type.FullName} must inherit AuthenticatedController or be added to the public-controller allow-list.");
+        }
+
+    }
+
+    [Fact]
     public void Entities_All_AreNotSealed()
     {
 

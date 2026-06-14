@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Databases.Core;
+using Databases.Core.Entities;
+using Shared.Resources.Auth;
 
 namespace Api.Tests;
 
@@ -76,6 +79,22 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
             });
 
         });
+
+    }
+
+    // The InMemory provider can't run migrations, so the startup seeder is skipped in tests.
+    // Seed the application roles directly so registration (AddToRoleAsync) succeeds.
+    public async Task SeedRoles()
+    {
+
+        using var scope = Services.CreateScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+
+        foreach (var role in new[] { AppRoles.SuperAdmin, AppRoles.User })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new ApplicationRole { Name = role });
+        }
 
     }
 }
