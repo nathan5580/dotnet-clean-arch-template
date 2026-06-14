@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Shared.Resources.HTTP.Common;
 
 namespace Api.Middleware;
 
@@ -32,14 +33,17 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
 
     }
 
+    private static readonly JsonSerializerOptions JsonOptions =
+        new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     private static async Task WriteErrorResponse(HttpContext context, HttpStatusCode status, string message)
     {
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)status;
 
-        var response = new { Error = message, StatusCode = (int)status };
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response)).ConfigureAwait(false);
+        var response = ApiResponse.Fail(message, (int)status);
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions)).ConfigureAwait(false);
 
     }
 }

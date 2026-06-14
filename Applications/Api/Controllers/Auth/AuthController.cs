@@ -40,7 +40,8 @@ public class AuthController(IAuthService authService, IAuthMapper authMapper, Us
     {
 
         var (user, token) = await authService.Login(request, ct);
-        var me = authMapper.ToGetMe(user);
+        var roles = await userManager.GetRolesAsync(user);
+        var me = authMapper.ToGetMe(user) with { Roles = roles.ToList() };
         return Ok(ApiResponse<GetMe>.Ok(me, token));
 
     }
@@ -56,7 +57,8 @@ public class AuthController(IAuthService authService, IAuthMapper authMapper, Us
         if (user is null)
             throw new UnauthorizedAccessException("User not found.");
 
-        var me = authMapper.ToGetMe(user);
+        var roles = await userManager.GetRolesAsync(user);
+        var me = authMapper.ToGetMe(user) with { Roles = roles.ToList() };
         return Ok(ApiResponse<GetMe>.Ok(me));
 
     }

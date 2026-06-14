@@ -1,4 +1,6 @@
 using Databases.Core;
+using Databases.Core.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Extensions;
@@ -18,7 +20,10 @@ public static class SeedExtensions
 
             await db.Database.MigrateAsync().ConfigureAwait(false);
 
-            // Seed roles, admin user, demo data here
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+            await SeedRoles(roleManager).ConfigureAwait(false);
+
+            // Seed admin user, demo data here
             // Idempotent — skip if already exists
         }
         catch (Exception ex)
@@ -26,6 +31,21 @@ public static class SeedExtensions
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger(nameof(SeedExtensions));
             logger.LogWarning(ex, "Database seeding skipped — DB may not be ready yet.");
+        }
+
+    }
+
+    private static async Task SeedRoles(RoleManager<ApplicationRole> roleManager)
+    {
+
+        string[] roles = [AppRoles.SuperAdmin, AppRoles.User];
+
+        foreach (var role in roles)
+        {
+            if (await roleManager.RoleExistsAsync(role).ConfigureAwait(false))
+                continue;
+
+            await roleManager.CreateAsync(new ApplicationRole { Name = role }).ConfigureAwait(false);
         }
 
     }
