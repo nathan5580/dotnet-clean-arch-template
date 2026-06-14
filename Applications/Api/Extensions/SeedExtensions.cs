@@ -7,6 +7,7 @@ public static class SeedExtensions
 {
     public static async Task SeedDatabase(this WebApplication app)
     {
+
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -26,5 +27,6 @@ public static class SeedExtensions
             var logger = loggerFactory.CreateLogger(nameof(SeedExtensions));
             logger.LogWarning(ex, "Database seeding skipped — DB may not be ready yet.");
         }
+
     }
 }

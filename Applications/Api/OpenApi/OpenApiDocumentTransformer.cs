@@ -7,6 +7,7 @@ public sealed class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
 {
     public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken ct)
     {
+
         document.Info = new OpenApiInfo
         {
             Title = "{{ProjectName}} API",
@@ -15,5 +16,6 @@ public sealed class OpenApiDocumentTransformer : IOpenApiDocumentTransformer
         };
 
         return Task.CompletedTask;
+
     }
 }

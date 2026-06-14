@@ -6,12 +6,16 @@ public sealed class ThemeService
 
     public void ApplyBrandColors(string primary)
     {
+
         PrimaryColor = primary;
         // Apply via JS interop
+
     }
 
     public void ResetToDefault()
     {
+
         PrimaryColor = "#3b82f6";
+
     }
 }

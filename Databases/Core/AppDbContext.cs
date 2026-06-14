@@ -20,6 +20,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, Applicatio
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+
         base.OnModelCreating(builder);
         builder.HasDefaultSchema("Auth");
 
@@ -27,5 +28,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, Applicatio
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         foreach (var assembly in ExtraConfigurationAssemblies)
             builder.ApplyConfigurationsFromAssembly(assembly);
+
     }
 }

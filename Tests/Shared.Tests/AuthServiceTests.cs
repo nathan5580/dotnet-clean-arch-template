@@ -10,10 +10,12 @@ public sealed class AuthServiceTests
 {
     private static AppDbContext CreateDbContext()
     {
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
             .Options;
         return new AppDbContext(options);
+
     }
 
     [Fact]

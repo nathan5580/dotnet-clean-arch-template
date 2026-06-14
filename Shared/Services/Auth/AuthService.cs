@@ -19,6 +19,7 @@ public sealed class AuthService(
 {
     public async Task<(ApplicationUser User, string Token)> Register(PostAuthRegisterRequest request, CancellationToken ct)
     {
+
         var existingUser = await userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
         if (existingUser is not null)
             throw new InvalidOperationException("Email is already registered.");
@@ -42,10 +43,13 @@ public sealed class AuthService(
         var token = "generate-jwt-token-here"; // Replace with actual JWT generation
 
         return (user, token);
+
     }
 
     public Task<(ApplicationUser User, string Token)> Login(PostAuthLoginRequest request, CancellationToken ct)
     {
+
         throw new NotImplementedException("Implement JWT login logic here.");
+
     }
 }

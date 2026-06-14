@@ -13,13 +13,16 @@ public sealed class LocalizationService
 
     public async Task InitializeAsync(string lang = "en")
     {
+
         _currentLang = lang;
         await LoadNamespace("common");
         _fallbackDict = new Dictionary<string, string>(_keys);
+
     }
 
     public async Task LoadNamespace(string ns)
     {
+
         try
         {
             using var http = new HttpClient();
@@ -35,10 +38,12 @@ public sealed class LocalizationService
         {
             // Fall back to English or raw key
         }
+
     }
 
     public string T(string key, params object[] args)
     {
+
         if (_keys.TryGetValue(key, out var value))
             return args.Length > 0 ? string.Format(value, args) : value;
 
@@ -46,5 +51,6 @@ public sealed class LocalizationService
             return args.Length > 0 ? string.Format(fallback, args) : fallback;
 
         return key;
+
     }
 }

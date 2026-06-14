@@ -6,6 +6,7 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+
         builder.ConfigureServices(services =>
         {
             // Replace real DB with in-memory for tests
@@ -16,5 +17,6 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
             services.AddDbContext<Databases.Core.AppDbContext>(options =>
                 options.UseInMemoryDatabase("TestDb"));
         });
+
     }
 }

@@ -67,10 +67,12 @@ public static class ServiceExtensions
 
         // Controllers
         services.AddControllers();
+
     }
 
     public static void UseAppMiddleware(this WebApplication app, IWebHostEnvironment environment)
     {
+
         if (environment.IsDevelopment())
         {
             app.UseWebAssemblyDebugging();
@@ -103,5 +105,6 @@ public static class ServiceExtensions
 
         // SPA fallback
         app.MapFallbackToFile("index.html");
+
     }
 }

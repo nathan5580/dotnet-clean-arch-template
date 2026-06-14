@@ -8,6 +8,7 @@ public sealed class AuthMapperTests
     [Fact]
     public void ToGetMe_WithValidUser_MapsCorrectly()
     {
+
         var mapper = new AuthMapper();
 
         var user = new ApplicationUser
@@ -24,5 +25,6 @@ public sealed class AuthMapperTests
         Assert.Equal(user.Email, result.Email);
         Assert.Equal(user.CreatedAt, result.CreatedAt);
         Assert.True(result.IsActive);
+
     }
 }
