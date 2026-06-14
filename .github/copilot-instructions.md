@@ -7,10 +7,10 @@ Repository structure
 - Applications/Web: Blazor WebAssembly frontend, Tailwind CSS
 - Shared/Resources: HTTP models, validators, enums
 - Shared/Services: business logic services by bounded context
-- Shared/Mapping: AutoMapper mapping profiles
+- Shared/Mapping: Mapperly source-generated mapper classes (one per bounded context)
 - Shared/Jobs: Quartz jobs
 - Databases/Core: EF Core entities, DbContext, configurations
-- Tests/: xUnit test projects (Api.Tests, Shared.Tests, Web.Tests)
+- Tests/: xUnit test projects (Api.Tests, Architecture.Tests, Shared.Tests, Web.Tests)
 
 Project conventions
 - No top-level statements
@@ -24,11 +24,15 @@ Project conventions
 - HTTP models are record types, never class
 - Keep code simple and readable; avoid unnecessary abstractions
 - sealed services/jobs/mappers; never sealed controllers or entities
+- Mapping via Mapperly (source generator): `[Mapper] public sealed partial class AuthMapper`, registered as `services.AddScoped<IAuthMapper, AuthMapper>()`
+- Method bodies aerated: one blank line after the opening `{` and one before the closing `}` (methods only; type bodies and control-flow blocks stay compact)
+- Conventions enforced by Tests/Architecture.Tests (NetArchTest + Roslyn) — CI fails on violations; keep it green
 
 Validation commands
 - dotnet restore {{ProjectName}}.slnx
 - dotnet build {{ProjectName}}.slnx --configuration Release
 - dotnet test Tests/Api.Tests/Api.Tests.csproj --configuration Release
+- dotnet test Tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release
 - dotnet test Tests/Shared.Tests/Shared.Tests.csproj --configuration Release
 - dotnet test Tests/Web.Tests/Web.Tests.csproj --configuration Release
 

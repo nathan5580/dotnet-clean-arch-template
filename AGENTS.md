@@ -32,10 +32,11 @@
 ├── Shared/
 │   ├── Resources/                     # HTTP models (records), enums, FluentValidation validators
 │   ├── Services/                      # Business logic services, organized by context
-│   ├── Mapping/                       # AutoMapper-backed wrappers — one per context
+│   ├── Mapping/                       # Mapperly-backed wrappers — one per context
 │   └── Jobs/                          # Quartz.NET background jobs
 └── Tests/
     ├── Api.Tests/                     # Integration tests (WebApplicationFactory)
+    ├── Architecture.Tests/            # NetArchTest + Roslyn convention enforcement
     ├── Shared.Tests/                  # Unit + convention tests
     └── Web.Tests/                     # Blazor convention tests
 ```
@@ -58,8 +59,7 @@ All code is organized by business context across every layer. Each context maps 
 - **File-scoped namespaces** — every file uses `namespace X.Y.Z;` (C# 10+), never block-scoped
 - **Primary constructors by layer:**
   - Services, controllers, jobs, authorization handlers — always use primary constructors
-  - Mappers — use primary constructors (wrapping AutoMapper's `IMapper`)
-  - AutoMapper profiles — use explicit constructors (required by the library)
+  - Mappers — use primary constructors
   - Entities — never use primary constructors; use `{ get; set; }` property pattern
 - **Interface + implementation in one file** — interface at the top, file named after implementation
   - E.g., `AuthService.cs` contains both `IAuthService` and `AuthService`
@@ -69,6 +69,22 @@ All code is organized by business context across every layer. Each context maps 
 - **KISS** — keep it simple; don't over-abstract
 - **Comments** — only when needed for understanding
 - **Namespaces** — follow folder structure
+
+### Method-Body Aeration
+
+Every method with a block body gets one blank line immediately after the opening `{` and one immediately before the closing `}`. Type bodies and control-flow blocks (`if`/`for`/`try`) stay compact.
+
+```csharp
+public GetMe ToGetMe(ApplicationUser user)
+{
+
+    var roles = LoadRoles(user);
+    return Map(user, roles);
+
+}
+```
+
+Enforced by `Tests/Architecture.Tests` (Roslyn). Not auto-fixable by `dotnet format` — write it aerated.
 
 ### `sealed` Convention
 
@@ -122,9 +138,10 @@ All code is organized by business context across every layer. Each context maps 
 
 ### Mapping Conventions
 
-- **AutoMapper**-based wrapper interfaces per context: `IAuthMapper` → `AuthMapper(IMapper mapper)`
-- AutoMapper profiles per context: `AuthMappingProfile`
-- Registered as `services.AddScoped<IAuthMapper, AuthMapper>()`
+- **Mapperly** (source generator) — no runtime mapping dependency
+- Wrapper interface per context: `IAuthMapper` → `[Mapper] public sealed partial class AuthMapper`
+- Renames/ignores via attributes: `[MapProperty(nameof(Src.X), nameof(Dst.Y))]`, `[MapperIgnoreTarget(nameof(Dst.Z))]`
+- Registered as `services.AddScoped<IAuthMapper, AuthMapper>()` (mappers are plain classes — no container)
 
 ### EF Core Conventions
 
@@ -239,6 +256,16 @@ dotnet test
 
 # API docs at /docs/v1 (Scalar)
 ```
+
+## Architecture Tests
+
+`Tests/Architecture.Tests` makes conventions executable — CI fails on violations:
+
+- **Structural (NetArchTest):** services/mappers/jobs/validators/handlers sealed; controllers + entities not sealed; HTTP models are records; no `Dto` suffix; `ct` named/last; enum properties use `.HasConversion<string>()`; layering (Databases/Shared never depend on Api).
+- **Source (Roslyn):** no try/catch in controllers; no `async void`; `ConfigureAwait(false)` on every library await; file-scoped namespaces; method-body aeration.
+- **Naming:** test methods match `Subject_Scenario_Expected`.
+
+Add a rule here whenever you add a convention.
 
 ## Test Conventions
 

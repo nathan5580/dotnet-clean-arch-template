@@ -14,7 +14,7 @@ Full conventions in `AGENTS.md`. Read it before making non-trivial changes.
 | Auth | ASP.NET Identity + JWT |
 | Jobs | Quartz.NET |
 | Validation | FluentValidation |
-| Mapping | AutoMapper |
+| Mapping | Mapperly |
 | API Docs | Scalar |
 | Tests | xUnit + WebApplicationFactory + Moq |
 | Solution | `.slnx` |
@@ -41,6 +41,8 @@ C#:
 - `TreatWarningsAsErrors=true`.
 - HTTP models are `record`, not `class`.
 - Throw from services; `ExceptionMiddleware` maps to HTTP.
+- Method bodies aerated: blank line after opening `{` and before closing `}` (methods only).
+- Conventions enforced by `Tests/Architecture.Tests` (NetArchTest + Roslyn) — keep it green.
 
 Blazor:
 - Code-behind `.razor.cs` for all pages.
