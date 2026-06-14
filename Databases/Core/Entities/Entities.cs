@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace Databases.Core.Entities;
@@ -28,6 +29,7 @@ public class ApplicationRole : IdentityRole
 
 public class UserActionAudit
 {
+    [Key]
     public Guid AuditId { get; set; }
     public string UserId { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
