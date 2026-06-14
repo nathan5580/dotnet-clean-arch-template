@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Architecture.Tests</RootNamespace>
+    <AssemblyName>Architecture.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Applications\Api\Api.csproj" />
+    <ProjectReference Include="..\..\Databases\Core\Core.csproj" />
+    <ProjectReference Include="..\..\Databases\Auth\Auth.csproj" />
+    <ProjectReference Include="..\..\Shared\Services\Services.csproj" />
+    <ProjectReference Include="..\..\Shared\Resources\Resources.csproj" />
+    <ProjectReference Include="..\..\Shared\Mapping\Mapping.csproj" />
+    <ProjectReference Include="..\..\Shared\Jobs\Jobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

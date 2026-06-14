@@ -15,6 +15,7 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/Api.Tests/Api.Tests.csproj" />
+    <Project Path="Tests/Architecture.Tests/Architecture.Tests.csproj" />
     <Project Path="Tests/Shared.Tests/Shared.Tests.csproj" />
     <Project Path="Tests/Web.Tests/Web.Tests.csproj" />
   </Folder>
