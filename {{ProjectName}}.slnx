@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/Databases/">
     <Project Path="Databases/Auth/Auth.csproj" />
+    <Project Path="Databases/Catalog/Catalog.csproj" />
     <Project Path="Databases/Core/Core.csproj" />
   </Folder>
   <Folder Name="/Shared/">

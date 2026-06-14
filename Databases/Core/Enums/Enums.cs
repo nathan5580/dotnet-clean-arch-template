@@ -6,3 +6,11 @@ public enum AuditActorType
     System,
     Anonymous
 }
+
+public enum ProductCategory
+{
+    General,
+    Electronics,
+    Apparel,
+    Food
+}
