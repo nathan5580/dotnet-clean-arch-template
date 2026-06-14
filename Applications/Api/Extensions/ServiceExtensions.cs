@@ -31,6 +31,7 @@ public static class ServiceExtensions
         services.AddAppAuthorization();
 
         // Scoped services
+        services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuthMapper, AuthMapper>();
 
