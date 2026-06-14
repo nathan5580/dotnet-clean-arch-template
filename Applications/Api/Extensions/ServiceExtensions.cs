@@ -30,13 +30,6 @@ public static class ServiceExtensions
         services.AddAppAuthentication(configuration);
         services.AddAppAuthorization();
 
-        // AutoMapper
-        services.AddSingleton<IMapper>(sp =>
-            new MapperConfiguration(cfg =>
-            {
-                cfg.AddMaps(typeof(AuthMappingProfile).Assembly);
-            }, sp.GetRequiredService<ILoggerFactory>()).CreateMapper());
-
         // Scoped services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuthMapper, AuthMapper>();

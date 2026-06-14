@@ -9,7 +9,6 @@ global using Api.Extensions;
 global using Api.Middleware;
 global using Api.OpenApi;
 global using Asp.Versioning;
-global using AutoMapper;
 global using Databases.Core;
 global using Databases.Core.Entities;
 global using Shared.Jobs;

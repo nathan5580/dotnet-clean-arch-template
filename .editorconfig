@@ -40,6 +40,8 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggest
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
 dotnet_diagnostic.IDE0040.severity = warning
+# Mapperly: ApplicationUser has many Identity members we intentionally don't map
+dotnet_diagnostic.RMG020.severity = none
 
 [*.{css,js,html,json,yml,yaml}]
 indent_size = 2
