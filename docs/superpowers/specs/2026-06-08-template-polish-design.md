@@ -1,6 +1,6 @@
 # Template Polish — Design Spec
 **Date:** 2026-06-08  
-**Status:** Approved
+**Status:** ⚠️ SUPERSEDED (2026-06-14) — its core premise (remove Blazor) was reversed; Blazor is kept, co-hosted. Convention fixes here live on in the `2026-06-14-*` specs (foundation + auth vertical). Retained for reference only.
 
 ## Goal
 

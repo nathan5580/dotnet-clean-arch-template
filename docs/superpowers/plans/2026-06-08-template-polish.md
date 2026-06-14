@@ -1,5 +1,7 @@
 # Template Polish — Implementation Plan
 
+> ⚠️ **SUPERSEDED (2026-06-14).** This plan deletes Blazor; that decision was reversed — Blazor is kept, co-hosted. Do **not** execute Task 1. The non-Blazor tasks (un-seal, ExceptionMiddleware, JwtService, Login, tests) are re-homed into the `2026-06-14` specs/plans. Retained for reference only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make `dotnet-clean-arch-template` a fully professional, convention-correct reference for new .NET 10 projects — pure API, no Blazor frontend.
