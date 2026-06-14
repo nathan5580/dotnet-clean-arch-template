@@ -36,7 +36,7 @@ Scalar API docs: `http://localhost:5050/docs/v1`.
 4. **Validator** — `Shared/Resources/Validators/Widget/` : `public sealed class PostWidgetRequestValidator : AbstractValidator<PostWidgetRequest>`.
 5. **Mapper** — `Shared/Mapping/Widget/` : `[Mapper] public sealed partial class WidgetMapper : IWidgetMapper`.
 6. **Service** — `Shared/Services/Widget/WidgetService.cs` : `IWidgetService` + `public sealed class WidgetService(...) : IWidgetService` (primary ctor, `ConfigureAwait(false)`, `ct` last).
-7. **Controller** — `Applications/Api/Controllers/Widget/WidgetController.cs` : not sealed, returns `ApiResponse<T>`, `[ProducesResponseType]` on every action, no try/catch.
+7. **Controller** — `Applications/Api/Controllers/Widget/WidgetController.cs` : `public class WidgetController(...) : AuthenticatedController` (not sealed; inherits `[Authorize]` + `CurrentUserId`), returns `ApiResponse<T>`, `[ProducesResponseType]` on every action, no try/catch. (Public controllers may stay on `ControllerBase` via the allow-list — see Architecture Tests.)
 8. **Register** — add `services.AddScoped<IWidgetService, WidgetService>();` and `services.AddScoped<IWidgetMapper, WidgetMapper>();` in `ServiceExtensions`.
 9. **Migration** — `dotnet ef migrations add AddWidget --project Applications/Api --startup-project Applications/Api --output-dir Data/Migrations`.
 10. **Tests** — unit (`Tests/Shared.Tests`) + integration (`Tests/Api.Tests`), names `Method_Scenario_Expected`.
@@ -147,7 +147,7 @@ Enforced by `Tests/Architecture.Tests` (Roslyn). `dotnet format` does not add th
 - **No try/catch** — `ExceptionMiddleware` maps `KeyNotFoundException`→404, `InvalidOperationException`→400, `UnauthorizedAccessException`→401, anything else→500.
 - **Never inject `AppDbContext` directly** — go through a service. Inject mapper interfaces (`IAuthMapper`).
 - Explicit binding attributes (`[FromBody]`/`[FromQuery]`/`[FromRoute]`), `[ProducesResponseType]` on every action, OpenAPI tags via `OpenApiTagNames.{X}` constants (no string literals).
-- The bundled `AuthController` inherits `ControllerBase` directly (register/login are public; `GetMe` carries its own `[Authorize]`). For your own authenticated controllers, see **Extending the Template → AuthenticatedController**.
+- Authenticated feature controllers inherit **`AuthenticatedController`** (an `[Authorize]` base exposing `CurrentUserId`) — enforced by an Architecture.Tests rule. The bundled `AuthController` inherits `ControllerBase` directly (register/login are public; `GetMe` carries its own `[Authorize]`) and is the allow-listed exception.
 
 ### Services
 
@@ -245,35 +245,21 @@ Databases.Core - Add Widget entity
 
 ## Extending the Template
 
-These are **patterns to add when you need them — they are NOT in the template yet.** They come from production apps this template distills; the scaffold ships a minimal stub so you wire them in once.
+The **auth vertical is fully implemented** — use it as the worked example. The patterns after it are what production apps add next; they are **not in the template yet** — wire them in when you need them.
 
-### JWT generation (currently stubbed)
+### Implemented auth (reference)
 
-`AuthService.Register` returns a placeholder token; JWT **validation** is wired in `AuthExtensions` (reads `Jwt:Key`/`Issuer`/`Audience`), but token **generation** is not implemented. Add an `IJwtService`/`JwtService` (in `Shared/Services/Auth/`) that builds a `JwtSecurityToken`, register it, and call it from `Register`/`Login`. Set a real `Jwt:Key` in configuration (the shipped `appsettings.json` has an empty key — an empty key fails auth at request time, so configure it before running auth flows).
-
-### AuthenticatedController base class
-
-Add `Applications/Api/Authorization/AuthenticatedController.cs`:
-```csharp
-[Authorize]
-public abstract class AuthenticatedController : ControllerBase
-{
-
-    protected string CurrentUserId =>
-        User.FindFirstValue(ClaimTypes.NameIdentifier)
-        ?? throw new UnauthorizedAccessException("User identity not found.");
-
-}
-```
-Have authenticated feature controllers inherit it; keep `AuthController` on `ControllerBase` (its endpoints are public). Then add an Architecture.Tests rule that every `*Controller` either inherits `AuthenticatedController` or is explicitly allow-listed.
+- **JWT generation** — `Shared/Services/Auth/JwtService.cs` (`IJwtService`) signs an HMAC-SHA256 token with NameIdentifier/Email/Role claims and a configurable expiry; `AuthService.Register`/`Login` call it. JWT validation is wired in `AuthExtensions`, which **fails fast at startup** if `Jwt:Key` is missing/blank/<32 bytes. The shipped `appsettings.json` leaves `Jwt:Key` empty — supply it in prod via env var / secret store; `appsettings.Development.json` ships a clearly-marked dev-only key so `dotnet run` works.
+- **`AuthenticatedController`** — `Applications/Api/Authorization/AuthenticatedController.cs`: an `[Authorize]` base exposing `CurrentUserId`. Feature controllers inherit it (enforced by an Architecture.Tests rule); `AuthController` inherits `ControllerBase` and is the allow-listed public exception.
+- **Roles** — constants in `Shared/Resources/Auth/AppRoles.cs` (`SuperAdmin`, `User`), seeded idempotently on startup by `SeedExtensions`.
 
 ### Richer authorization (permissions/policies)
 
-The scaffold ships `AppPermissions` (string constants like `users.read`) and `AppRoles` (`SuperAdmin`, `User`). Production apps extend this with a dynamic permission policy (`[HasRight(AppPermissions.X)]`), a verified-user filter (`[VerifiedUser]`), resource-access filters (`[ValidateWidgetAccess]`), and an `AppPermissions.ByRole` map. Add these under `Applications/Api/Authorization/` and enforce "no raw role strings in `[Authorize(Roles=...)]`" with an Architecture.Tests rule.
+The scaffold ships `AppPermissions` (string constants like `users.read`). Production apps extend this with a dynamic permission policy (`[HasRight(AppPermissions.X)]`), a verified-user filter (`[VerifiedUser]`), resource-access filters (`[ValidateWidgetAccess]`), and an `AppPermissions.ByRole` map. Add these under `Applications/Api/Authorization/` and enforce "no raw role strings in `[Authorize(Roles=...)]`" with an Architecture.Tests rule.
 
-### Role seeding & default admin
+### Default admin & refresh tokens
 
-`SeedExtensions` runs migrations on startup; extend it to seed `AppRoles` and a default admin user from configuration.
+Seed a default admin user from configuration in `SeedExtensions`, and add refresh-token issuance/persistence/revocation (the config has `RefreshTokenExpiryDays` but no refresh flow yet).
 
 ---
 
