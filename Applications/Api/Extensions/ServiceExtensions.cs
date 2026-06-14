@@ -7,7 +7,9 @@ using Scalar.AspNetCore;
 using Serilog;
 using Shared.Jobs;
 using Shared.Mapping.Auth;
+using Shared.Mapping.Catalog;
 using Shared.Services.Auth;
+using Shared.Services.Catalog;
 
 namespace Api.Extensions;
 
@@ -17,10 +19,14 @@ public static class ServiceExtensions
     {
         // Register external EF configuration assemblies before AddDbContext
         AppDbContext.ExtraConfigurationAssemblies.Add(typeof(Databases.Auth.UserConfiguration).Assembly);
+        AppDbContext.ExtraConfigurationAssemblies.Add(typeof(Databases.Catalog.ProductConfiguration).Assembly);
 
-        // Database
+        // Database — migrations live in the Api project (Data/Migrations), not in
+        // Databases.Core where AppDbContext is defined, so point EF at the Api assembly.
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection"),
+                sql => sql.MigrationsAssembly(typeof(ServiceExtensions).Assembly.GetName().Name)));
 
         // Identity + Auth
         services.AddIdentity<ApplicationUser, ApplicationRole>()
@@ -34,6 +40,8 @@ public static class ServiceExtensions
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuthMapper, AuthMapper>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductMapper, ProductMapper>();
 
         // FluentValidation
         services.AddValidatorsFromAssemblyContaining<Shared.Resources.Validators.Auth.PostAuthLoginRequestValidator>();
