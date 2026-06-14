@@ -8,9 +8,3 @@ public static class AppPermissions
 
     // Add your permission constants here
 }
-
-public static class AppRoles
-{
-    public const string SuperAdmin = "SuperAdmin";
-    public const string User = "User";
-}

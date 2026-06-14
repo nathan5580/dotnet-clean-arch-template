@@ -18,6 +18,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.0.0" />
+    <!-- JWT generation (aligns with Microsoft.IdentityModel.* 8.0.1 pulled in by JwtBearer 10.0.7) -->
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <!-- Serilog -->
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />

@@ -14,6 +14,7 @@ global using Databases.Core.Entities;
 global using Shared.Jobs;
 global using Shared.Mapping;
 global using Shared.Resources;
+global using Shared.Resources.Auth;
 global using Shared.Resources.Enums;
 global using Shared.Resources.HTTP;
 global using Shared.Services;
