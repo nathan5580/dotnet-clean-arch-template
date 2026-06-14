@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Shared.Resources.Enums;
 using Shared.Resources.HTTP.Auth.GET;
 using Shared.Resources.HTTP.Auth.POST;
 using Shared.Resources.HTTP.Catalog.GET;
@@ -60,23 +61,23 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
             Name = "Integration Widget",
             Description = "Created in an integration test",
             Price = 42.00m,
-            Category = "Electronics"
+            Category = ProductCategory.Electronics
         };
 
         using var message = new HttpRequestMessage(HttpMethod.Post, "/api/products")
         {
-            Content = JsonContent.Create(request)
+            Content = JsonContent.Create(request, options: WebAppFactory.JsonOptions)
         };
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await _client.SendAsync(message);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ApiResponse<GetProduct>>();
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<GetProduct>>(WebAppFactory.JsonOptions);
         Assert.NotNull(body);
         Assert.True(body!.Success);
         Assert.Equal("Integration Widget", body.Data!.Name);
-        Assert.Equal("Electronics", body.Data.Category);
+        Assert.Equal(ProductCategory.Electronics, body.Data.Category);
 
     }
 
@@ -90,12 +91,12 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         {
             Name = $"Listed-{Guid.NewGuid():N}",
             Price = 5.00m,
-            Category = "General"
+            Category = ProductCategory.General
         };
 
         using var createMessage = new HttpRequestMessage(HttpMethod.Post, "/api/products")
         {
-            Content = JsonContent.Create(createRequest)
+            Content = JsonContent.Create(createRequest, options: WebAppFactory.JsonOptions)
         };
         createMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var createResponse = await _client.SendAsync(createMessage);
@@ -107,7 +108,7 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         var listResponse = await _client.SendAsync(listMessage);
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
 
-        var body = await listResponse.Content.ReadFromJsonAsync<ApiResponse<List<GetProduct>>>();
+        var body = await listResponse.Content.ReadFromJsonAsync<ApiResponse<List<GetProduct>>>(WebAppFactory.JsonOptions);
         Assert.NotNull(body);
         Assert.True(body!.Success);
         Assert.Contains(body.Data!, p => p.Name == createRequest.Name);

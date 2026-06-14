@@ -1,6 +1,5 @@
 using Databases.Core;
 using Databases.Core.Entities;
-using Databases.Core.Enums;
 using Shared.Mapping.Catalog;
 using Shared.Resources.HTTP.Catalog.GET;
 using Shared.Resources.HTTP.Catalog.POST;
@@ -59,7 +58,7 @@ public sealed class ProductService(
             Name = request.Name,
             Description = request.Description,
             Price = request.Price,
-            Category = ParseCategory(request.Category),
+            Category = request.Category,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -86,7 +85,7 @@ public sealed class ProductService(
         product.Name = request.Name;
         product.Description = request.Description;
         product.Price = request.Price;
-        product.Category = ParseCategory(request.Category);
+        product.Category = request.Category;
         product.IsActive = request.IsActive;
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -113,9 +112,4 @@ public sealed class ProductService(
         log.LogInformation("Deleted product {ProductId}", id);
 
     }
-
-    private static ProductCategory ParseCategory(string category) =>
-        Enum.TryParse<ProductCategory>(category, ignoreCase: true, out var parsed)
-            ? parsed
-            : throw new InvalidOperationException($"Invalid product category '{category}'.");
 }

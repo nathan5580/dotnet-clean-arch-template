@@ -1,3 +1,8 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Databases.Core;
+using Databases.Core.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -6,15 +11,19 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Databases.Core;
-using Databases.Core.Entities;
 using Shared.Resources.Auth;
 
 namespace Api.Tests;
 
 public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
 {
+    // Shared JSON options that mirror the API's JsonStringEnumConverter so client-side
+    // serialization and deserialization round-trip enums as their string names.
+    public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     // Each factory instance (one per test class) gets its own isolated InMemory store so
     // role seeding and registered users from one test class can't leak into another and
     // trip Identity's single-row lookups ("Sequence contains more than one element").

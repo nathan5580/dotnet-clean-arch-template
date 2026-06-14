@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Shared.Resources.Enums;
 using Shared.Resources.HTTP.Catalog.GET;
 using Shared.Resources.HTTP.Catalog.POST;
 using Web.Services;
@@ -7,8 +8,6 @@ namespace Web.Pages.Products;
 
 public partial class ProductCreate : ComponentBase
 {
-    private static readonly string[] Categories = ["General", "Electronics", "Apparel", "Food"];
-
     [Inject] private IApiClient ApiClient { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private LocalizationService Localization { get; set; } = default!;
@@ -17,7 +16,7 @@ public partial class ProductCreate : ComponentBase
     private string _name = string.Empty;
     private string? _description;
     private decimal _price;
-    private string _category = "General";
+    private ProductCategory _category = ProductCategory.General;
     private bool _loading = true;
     private bool _submitting;
     private string? _error;

@@ -1,6 +1,7 @@
 using Databases.Core;
 using Microsoft.EntityFrameworkCore;
 using Shared.Mapping.Catalog;
+using Shared.Resources.Enums;
 using Shared.Resources.HTTP.Catalog.POST;
 using Shared.Services.Catalog;
 
@@ -33,14 +34,14 @@ public sealed class ProductServiceTests
             Name = "Widget",
             Description = "A useful widget",
             Price = 19.99m,
-            Category = "Electronics"
+            Category = ProductCategory.Electronics
         };
 
         var created = await service.PostProduct(request, CancellationToken.None);
 
         Assert.NotEqual(Guid.Empty, created.ProductId);
         Assert.Equal("Widget", created.Name);
-        Assert.Equal("Electronics", created.Category);
+        Assert.Equal(ProductCategory.Electronics, created.Category);
         Assert.True(created.IsActive);
         Assert.Equal(1, await db.Products.CountAsync());
 
@@ -54,14 +55,14 @@ public sealed class ProductServiceTests
         var service = CreateService(db);
 
         var created = await service.PostProduct(
-            new PostProductRequest { Name = "Shirt", Price = 9.50m, Category = "Apparel" },
+            new PostProductRequest { Name = "Shirt", Price = 9.50m, Category = ProductCategory.Apparel },
             CancellationToken.None);
 
         var fetched = await service.GetProduct(created.ProductId, CancellationToken.None);
 
         Assert.Equal(created.ProductId, fetched.ProductId);
         Assert.Equal("Shirt", fetched.Name);
-        Assert.Equal("Apparel", fetched.Category);
+        Assert.Equal(ProductCategory.Apparel, fetched.Category);
 
     }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
+using Shared.Resources.Enums;
 
 namespace Databases.Core.Entities;
 

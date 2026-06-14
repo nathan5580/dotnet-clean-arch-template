@@ -28,7 +28,7 @@
                     <div>
                         <label class="meta-field-label">@T("create.category")</label>
                         <select class="meta-input" @bind="_category">
-                            @foreach (var category in Categories)
+                            @foreach (var category in Enum.GetValues<Shared.Resources.Enums.ProductCategory>())
                             {
                                 <option value="@category">@category</option>
                             }

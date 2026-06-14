@@ -6,3 +6,11 @@ public enum UserStatus
     Inactive,
     Suspended
 }
+
+public enum ProductCategory
+{
+    General,
+    Electronics,
+    Apparel,
+    Food
+}

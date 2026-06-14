@@ -75,7 +75,9 @@ public static class ServiceExtensions
         });
 
         // Controllers
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(o =>
+                o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
     }
 
