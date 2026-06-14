@@ -15,6 +15,11 @@ namespace Api.Tests;
 
 public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
 {
+    // Each factory instance (one per test class) gets its own isolated InMemory store so
+    // role seeding and registered users from one test class can't leak into another and
+    // trip Identity's single-row lookups ("Sequence contains more than one element").
+    private readonly string _databaseName = $"TestDb_{Guid.NewGuid():N}";
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
 
@@ -46,7 +51,7 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
                 services.Remove(descriptor);
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase("TestDb"));
+                options.UseInMemoryDatabase(_databaseName));
 
             // Remove all IConfigureOptions<JwtBearerOptions> registered by AddJwtBearer
             // (they captured an empty key from appsettings.json) and replace with test key

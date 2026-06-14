@@ -209,23 +209,53 @@ public sealed class StructuralRulesTests
     public void EntityEnumProperties_Use_StringConversion()
     {
 
+        // Build the model the way the running app does: per-context EF configurations
+        // (e.g. Databases.Catalog) live outside Databases.Core and are applied via
+        // AppDbContext.ExtraConfigurationAssemblies, which AddAppServices populates.
+        // Register the same assemblies here so the model under test matches production.
+        var extraConfigAssemblies = new[]
+        {
+            typeof(Databases.Auth.UserConfiguration).Assembly,
+            typeof(Databases.Catalog.ProductConfiguration).Assembly,
+        };
+
+        foreach (var assembly in extraConfigAssemblies)
+            if (!AppDbContext.ExtraConfigurationAssemblies.Contains(assembly))
+                AppDbContext.ExtraConfigurationAssemblies.Add(assembly);
+
+        // Build the model with the production relational provider (SqlServer). This is a
+        // model-construction call only — it does NOT open a connection — and unlike the
+        // InMemory provider it materialises the value converter from .HasConversion<string>(),
+        // surfacing it via the relational type mapping (the InMemory provider stores enums
+        // natively and would make this rule silently vacuous).
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase("arch-tests")
+            .UseSqlServer("Server=arch-tests;Database=arch-tests;Trusted_Connection=False;")
             .Options;
 
         using var context = new AppDbContext(options);
 
-        foreach (var entity in context.Model.GetEntityTypes())
-            foreach (var property in entity.GetProperties())
-            {
-                var clrType = Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType;
-                if (!clrType.IsEnum)
-                    continue;
+        var enumProperties = context.Model.GetEntityTypes()
+            .SelectMany(entity => entity.GetProperties()
+                .Where(p => (Nullable.GetUnderlyingType(p.ClrType) ?? p.ClrType).IsEnum)
+                .Select(p => (entity, property: p)))
+            .ToList();
 
-                var converter = property.GetValueConverter();
-                Assert.True(converter is not null && converter.ProviderClrType == typeof(string),
-                    $"{entity.ClrType.Name}.{property.Name} is an enum and must use .HasConversion<string>().");
-            }
+        // Non-vacuousness guard: there must be at least one enum property to check, otherwise
+        // the rule asserts nothing. Product.Category keeps this rule live.
+        Assert.NotEmpty(enumProperties);
+
+        foreach (var (entity, property) in enumProperties)
+        {
+            // .HasConversion<string>() lands on the relational type mapping in EF 10, so the
+            // provider CLR type becomes string. Accept either surfacing (explicit value
+            // converter or type-mapping converter) for robustness across EF versions.
+            var converter = property.GetValueConverter() ?? property.FindTypeMapping()?.Converter;
+            var providerIsString = property.GetProviderClrType() == typeof(string)
+                || converter?.ProviderClrType == typeof(string);
+
+            Assert.True(providerIsString,
+                $"{entity.ClrType.Name}.{property.Name} is an enum and must use .HasConversion<string>().");
+        }
 
     }
 }
