@@ -1,10 +1,54 @@
-# {{ProjectName}} — Architecture, Conventions & Guide
+# {{ProjectName}} — Architecture, Conventions & Agent Guide
 
-## Overview
+{{ProjectDescription}} Built with .NET 10 + co-hosted Blazor WebAssembly.
 
-{{ProjectDescription}} Built with .NET 10.
+> This file is the **single source of truth** for how this codebase is built. `CLAUDE.md` and `.github/copilot-instructions.md` are short pointers back here. `CONVENTIONS.md` is a one-page cheat-sheet. Read this before any non-trivial change.
 
-**Architecture:** ASP.NET Core 10 Web API (`Api`) that co-hosts a Blazor WebAssembly 10 client (`Web`). The API hosts everything — Controllers, SignalR, Quartz jobs, OpenAPI/Scalar docs, and Blazor WASM static files. The Web project can also run standalone for UI development.
+---
+
+## For AI Agents — Start Here
+
+**Your conventions are executable.** `Tests/Architecture.Tests` enforces them with NetArchTest + Roslyn. After any change, run `dotnet test` — a failing architecture test means you broke a convention, and the failure message tells you which file and rule. Treat that as the ground-truth checker, not this prose.
+
+**Golden rules (the ones that trip agents up):**
+- File-scoped namespaces; namespace = folder path.
+- `sealed` on services / mappers / jobs / validators / auth-handlers. **Never** `sealed` on controllers or entities.
+- Primary constructors on services / controllers / jobs / mappers. **Never** on entities.
+- No `Async` suffix on method names. No `Dto` suffix on types. No `try/catch` in controllers (throw; `ExceptionMiddleware` maps it).
+- HTTP models are `record`, organized `HTTP/{Context}/{Verb}/`.
+- `ConfigureAwait(false)` on every `await` in library projects (`Shared.*`, `Databases.*`). `CancellationToken ct` is the last parameter.
+- **Method-body aeration:** one blank line right after a method's opening `{` and one right before its closing `}` (methods only — not types or control-flow blocks). `dotnet format` will NOT add these; write them by hand.
+- `TreatWarningsAsErrors=true` — the build is zero-warning.
+
+**Commands:**
+```bash
+docker compose -f docker-compose.devdb.yml up -d   # dev SQL Server
+dotnet build "{{ProjectName}}.slnx" -c Release      # 0 warnings, 0 errors expected
+dotnet test  "{{ProjectName}}.slnx" -c Release      # all green, incl. Architecture.Tests
+dotnet run --project Applications/Api               # API + co-hosted Blazor → http://localhost:5050
+```
+Scalar API docs: `http://localhost:5050/docs/v1`.
+
+**Recipe — add a feature end-to-end (a "vertical slice" for context `Widget`):**
+1. **Entity** — `Databases/Core/Entities/` : `public class Widget { ... }` (not sealed; PK pattern below).
+2. **EF config** — `Databases/{Widget}/WidgetConfiguration.cs` : `IEntityTypeConfiguration<Widget>`, `ToTable("Widget","Widget")`, `HasConversion<string>()` for enums, named constraints. Register its assembly in `ServiceExtensions` via `AppDbContext.ExtraConfigurationAssemblies.Add(typeof(WidgetConfiguration).Assembly)` (configs outside `Databases.Core` aren't auto-discovered — see *Known Wrinkles*).
+3. **HTTP models** — `Shared/Resources/HTTP/Widget/GET|POST/` : `record GetWidget`, `record PostWidgetRequest` (no `Dto`).
+4. **Validator** — `Shared/Resources/Validators/Widget/` : `public sealed class PostWidgetRequestValidator : AbstractValidator<PostWidgetRequest>`.
+5. **Mapper** — `Shared/Mapping/Widget/` : `[Mapper] public sealed partial class WidgetMapper : IWidgetMapper`.
+6. **Service** — `Shared/Services/Widget/WidgetService.cs` : `IWidgetService` + `public sealed class WidgetService(...) : IWidgetService` (primary ctor, `ConfigureAwait(false)`, `ct` last).
+7. **Controller** — `Applications/Api/Controllers/Widget/WidgetController.cs` : not sealed, returns `ApiResponse<T>`, `[ProducesResponseType]` on every action, no try/catch.
+8. **Register** — add `services.AddScoped<IWidgetService, WidgetService>();` and `services.AddScoped<IWidgetMapper, WidgetMapper>();` in `ServiceExtensions`.
+9. **Migration** — `dotnet ef migrations add AddWidget --project Applications/Api --startup-project Applications/Api --output-dir Data/Migrations`.
+10. **Tests** — unit (`Tests/Shared.Tests`) + integration (`Tests/Api.Tests`), names `Method_Scenario_Expected`.
+11. **Self-check** — `dotnet test`. Green = conventions satisfied.
+
+**Commit format:** `Project - What was done` (e.g. `Api - Add Widget endpoints`). Single scope, no body for small changes.
+
+---
+
+## Architecture
+
+A single deployable: an **ASP.NET Core 10 Web API** (`Api`) that co-hosts a **Blazor WebAssembly 10** client (`Web`). The API serves REST controllers, Quartz jobs, OpenAPI/Scalar docs, and the Blazor WASM static files. `Web` can also run standalone for UI work.
 
 ## Solution Structure
 
@@ -12,63 +56,56 @@
 {{ProjectName}}/
 ├── Applications/
 │   ├── Api/                          # ASP.NET Core Web API (co-hosts Blazor WASM)
-│   │   ├── Authorization/            # Custom auth handlers, policies, resource filters
+│   │   ├── Authorization/            # AppPermissions, AppRoles (string constants)
 │   │   ├── Controllers/              # Organized by bounded context subfolder
 │   │   ├── Extensions/               # Service registration, middleware pipeline, seeding
-│   │   ├── Middleware/                # Exception, Auth middleware
-│   │   ├── OpenApi/                   # Scalar config, document/operation/schema transformers
-│   │   └── Data/Migrations/           # EF Core migrations
-│   └── Web/                           # Blazor WebAssembly client
-│       ├── Components/                # Layout, State, Surface components
-│       ├── Layout/                    # MainLayout, NavMenu
-│       ├── Pages/                     # Organized by bounded context
-│       ├── Services/                  # JwtAuthStateProvider, ApiClient, ToastService
-│       ├── Styles/                    # app.css (Tailwind v4 input)
-│       └── wwwroot/                   # Static assets + i18n locale files
+│   │   ├── Middleware/               # ExceptionMiddleware
+│   │   ├── OpenApi/                  # Scalar config, document transformers
+│   │   └── Data/Migrations/          # EF Core migrations (auto-applied at startup)
+│   └── Web/                          # Blazor WebAssembly client
+│       ├── Components/               # Layout, State, Surface components
+│       ├── Layout/                   # MainLayout
+│       ├── Pages/                    # Organized by bounded context
+│       ├── Services/                 # ApiClient, ThemeService, LocalizationService, ToastService
+│       ├── Styles/                   # app.css (Tailwind v4 input)
+│       └── wwwroot/                  # Static assets + i18n locale files
 ├── Databases/
-│   ├── Core/                          # EF Core — AppDbContext, Entities, Enums
-│   ├── Auth/                          # Identity tables EF config
-│   └── ...per-context database projects
+│   ├── Core/                         # AppDbContext, Entities, Enums
+│   ├── Auth/                         # Identity EF configuration
+│   └── ...per-context config projects
 ├── Shared/
-│   ├── Resources/                     # HTTP models (records), enums, FluentValidation validators
-│   ├── Services/                      # Business logic services, organized by context
-│   ├── Mapping/                       # Mapperly-backed wrappers — one per context
-│   └── Jobs/                          # Quartz.NET background jobs
+│   ├── Resources/                    # HTTP models (records), enums, FluentValidation validators
+│   ├── Services/                     # Business logic services (sealed, primary ctors)
+│   ├── Mapping/                      # Mapperly source-generated mappers — one per context
+│   └── Jobs/                         # Quartz.NET background jobs
 └── Tests/
-    ├── Api.Tests/                     # Integration tests (WebApplicationFactory)
-    ├── Architecture.Tests/            # NetArchTest + Roslyn convention enforcement
-    ├── Shared.Tests/                  # Unit + convention tests
-    └── Web.Tests/                     # Blazor convention tests
+    ├── Api.Tests/                    # Integration (WebApplicationFactory + InMemory)
+    ├── Architecture.Tests/           # NetArchTest + Roslyn convention enforcement
+    ├── Shared.Tests/                 # Unit tests (Moq)
+    └── Web.Tests/                    # (stub) Blazor tests
 ```
 
 ## Bounded Contexts
 
-All code is organized by business context across every layer. Each context maps to:
+All code is organized by business context across every layer:
 
-- A controller subdirectory in `Applications/Api/Controllers/{Context}/`
-- A service subdirectory in `Shared/Services/{Context}/`
-- HTTP model subdirectory in `Shared/Resources/HTTP/{Context}/`
-- An EF Core config project in `Databases/{Context}/`
-- (Optionally) a mapping wrapper in `Shared/Mapping/{Context}/`
+- Controller: `Applications/Api/Controllers/{Context}/`
+- Service: `Shared/Services/{Context}/`
+- HTTP models: `Shared/Resources/HTTP/{Context}/{Verb}/`
+- EF config: `Databases/{Context}/`
+- Mapper: `Shared/Mapping/{Context}/`
 
 ## Code Conventions
 
-### General C# Conventions
+### General C#
 
-- **No top-level statements** — all `Program.cs` use explicit `Main` method
-- **File-scoped namespaces** — every file uses `namespace X.Y.Z;` (C# 10+), never block-scoped
-- **Primary constructors by layer:**
-  - Services, controllers, jobs, authorization handlers — always use primary constructors
-  - Mappers — use primary constructors
-  - Entities — never use primary constructors; use `{ get; set; }` property pattern
-- **Interface + implementation in one file** — interface at the top, file named after implementation
-  - E.g., `AuthService.cs` contains both `IAuthService` and `AuthService`
-- **No `Async` suffix** — `GetUser`, not `GetUserAsync`
-- **No `Dto` suffix** — verb-first naming: `GetUser`, `PostUserRequest`
-- **GlobalUsings.cs** — each project has its own with type aliases for entities and framework-level usings
-- **KISS** — keep it simple; don't over-abstract
-- **Comments** — only when needed for understanding
-- **Namespaces** — follow folder structure
+- **Explicit `Main`** — `Program.cs` uses an explicit `Main` method (no top-level statements). `Program` is a non-static `public class` (so `WebApplicationFactory<Program>` works).
+- **File-scoped namespaces** — `namespace X.Y.Z;`, never block-scoped (enforced).
+- **Primary constructors by layer:** services / controllers / jobs / mappers / auth handlers → yes. Entities → never (use `{ get; set; }`).
+- **Interface + implementation in one file**, named after the implementation (`AuthService.cs` holds `IAuthService` + `AuthService`).
+- **No `Async` suffix**; **no `Dto` suffix**.
+- **`GlobalUsings.cs`** per project for framework imports and entity aliases.
+- **KISS**; comments only where they earn their keep.
 
 ### Method-Body Aeration
 
@@ -84,212 +121,181 @@ public GetMe ToGetMe(ApplicationUser user)
 }
 ```
 
-Enforced by `Tests/Architecture.Tests` (Roslyn). Not auto-fixable by `dotnet format` — write it aerated.
+Enforced by `Tests/Architecture.Tests` (Roslyn). `dotnet format` does not add these blank lines — write them by hand.
 
 ### `sealed` Convention
 
 | Layer | Sealed? | Why |
 |-------|---------|-----|
-| Services | Always sealed | JIT devirtualization; no inheritance needed |
-| Mappers | Always sealed | No override scenario |
-| Jobs | Always sealed | Quartz jobs are instantiated directly |
-| Auth handlers | Always sealed | Single-purpose |
-| Controllers | Never sealed | May need mocking in tests |
-| Entities | Never sealed | EF Core proxies require open types |
+| Services | Always | JIT devirtualization; no inheritance needed |
+| Mappers | Always | No override scenario |
+| Jobs | Always | Quartz instantiates directly |
+| Validators | Always | Single-purpose |
+| Auth handlers | Always | Single-purpose |
+| Controllers | **Never** | May be derived / mocked |
+| Entities | **Never** | EF Core proxies require open types |
 
-### HTTP Model Conventions
+### HTTP Models
 
-- All models are `record` types, never `class`
-- Read models: `Get{Resource}` (e.g., `GetUser`, `GetCompany`)
-- Write models: `{Verb}{Resource}Request` (e.g., `PostUserRequest`, `PutCompanyRequest`)
-- Organized in `HTTP/{Context}/{Verb}/` subfolders
-- Shared envelope: `HTTP/Common/ApiResponse.cs`
+- All `record`, never `class`. Read: `Get{Resource}`. Write: `{Verb}{Resource}Request`.
+- Organized in `HTTP/{Context}/{Verb}/`. Shared envelope: `HTTP/Common/ApiResponse.cs` (`ApiResponse<T>.Ok/.Created/.Fail`).
 
-### API Controller Conventions
+### API Controllers
 
-- **One controller per resource per context**
-- Route pattern: `api/{context}/{resource}` (kebab-case, plural for collections)
-- Action naming: `<HttpVerb><Resource>` (e.g., `GetUser`, `PostCompany`, `PutCompany`, `DeleteCompany`)
-- Return `ApiResponse<T>` for consistency
-- **All authenticated controllers** inherit from `AuthenticatedController` base class
-- **No try/catch** — global `ExceptionMiddleware` maps: `KeyNotFoundException`→404, `InvalidOperationException`→400, `UnauthorizedAccessException`→401
-- **Never inject `AppDbContext` directly** — always wrap with a service layer
-- Controllers inject **mapper interfaces** (`IAuthMapper`, etc.)
-- **Explicit binding attributes** on all action parameters (`[FromBody]`, `[FromQuery]`, `[FromRoute]`)
-- **`[ProducesResponseType]` on every action**
-- **OpenAPI tags via constants** — use `OpenApiTagNames.{Resource}`, never string literals
+- One controller per resource per context. Route `api/{context}/{resource}` (kebab-case, plural collections).
+- Action naming `<HttpVerb><Resource>` (`GetUser`, `PostCompany`). Return `ApiResponse<T>`.
+- **No try/catch** — `ExceptionMiddleware` maps `KeyNotFoundException`→404, `InvalidOperationException`→400, `UnauthorizedAccessException`→401, anything else→500.
+- **Never inject `AppDbContext` directly** — go through a service. Inject mapper interfaces (`IAuthMapper`).
+- Explicit binding attributes (`[FromBody]`/`[FromQuery]`/`[FromRoute]`), `[ProducesResponseType]` on every action, OpenAPI tags via `OpenApiTagNames.{X}` constants (no string literals).
+- The bundled `AuthController` inherits `ControllerBase` directly (register/login are public; `GetMe` carries its own `[Authorize]`). For your own authenticated controllers, see **Extending the Template → AuthenticatedController**.
 
-### Service Conventions
+### Services
 
-- Interface + implementation in same file, named after implementation
-- Primary constructors for DI
-- Method naming mirrors controllers: `<HttpVerb><Resource>`
-- **`ConfigureAwait(false)`** on every `await` in library code
-- **`CancellationToken ct`** propagated through all async methods (last parameter)
-- **Every `catch` block must log** — never silent swallowing
-- **No `async void`** — use `async Task` always
+- Interface + impl in one file. Primary constructors. Method names mirror controllers.
+- `ConfigureAwait(false)` on every library `await`. `CancellationToken ct` last. Every `catch` logs. No `async void`.
 
-### Validator Conventions
+### Validators
 
-- FluentValidation with auto-discovery via `services.AddValidatorsFromAssemblyContaining<...>()`
-- One validator per request model
-- Organized by context in `Validators/{Context}/`
-- File naming: `{Model}Validator.cs`
+- FluentValidation, auto-discovered via `AddValidatorsFromAssemblyContaining<...>()`. One `sealed` validator per request model, in `Validators/{Context}/`.
 
-### Mapping Conventions
+### Mapping — Mapperly
 
-- **Mapperly** (source generator) — no runtime mapping dependency
-- Wrapper interface per context: `IAuthMapper` → `[Mapper] public sealed partial class AuthMapper`
-- Renames/ignores via attributes: `[MapProperty(nameof(Src.X), nameof(Dst.Y))]`, `[MapperIgnoreTarget(nameof(Dst.Z))]`
-- Registered as `services.AddScoped<IAuthMapper, AuthMapper>()` (mappers are plain classes — no container)
+- Source generator, no runtime mapping dependency. Wrapper interface per context.
+- `[Mapper] public sealed partial class AuthMapper : IAuthMapper` with `public partial GetMe ToGetMe(...)`.
+- Renames/ignores via `[MapProperty(nameof(Src.X), nameof(Dst.Y))]` and `[MapperIgnoreTarget(nameof(Dst.Z))]`.
+- Registered `services.AddScoped<IAuthMapper, AuthMapper>()` (plain classes — no container).
 
-### EF Core Conventions
+### EF Core
 
-- **Singular** table names
-- **Per-context schemas**: `Auth.User`, `Company.Service`
-- Enum properties stored as strings with `HasConversion<string>()`
-- `.AsSplitQuery()` for queries with multiple collection includes
-- `.Select()` projection for read-only `Get*` queries
-- Decimal precision always specified
-- Constraint naming: `PK-Schema_Table_Column`, `FK-Schema_Table_Src_Dst`
+- Singular table names; per-context schemas (`Auth.User`, `Widget.Widget`). Enum properties `HasConversion<string>()`.
+- `.AsSplitQuery()` for multiple collection includes; `.Select()` projections for read queries; decimal precision always specified.
+- Constraint naming: `PK-Schema_Table_Column`, `FK-Schema_Table_Src_Dst`, `IX-Schema_Table_Column`.
 
 ### Entity Primary Key Pattern
 
 ```csharp
-public Guid UserId { get; set; }
+public Guid WidgetId { get; set; }
 [NotMapped]
-public Guid Id { get => UserId; set => UserId = value; }
+public Guid Id { get => WidgetId; set => WidgetId = value; }
 ```
+(For Identity-derived entities whose base already declares `Id`, use `public new Guid Id { ... }`.)
 
 ## Blazor WASM Frontend Conventions
 
-### Project Structure
-
 ```
 Web/
-├── Components/
-│   ├── Layout/          # AppPageFrame (page shell)
-│   ├── State/           # AppLoader, AppStateCard
-│   └── Surface/         # MetaPanel, Toast
-├── Layout/              # MainLayout, NavMenu
-├── Pages/               # Organized by context: Auth/, Company/, Home/
-├── Services/            # JwtAuthStateProvider, ApiClient, ThemeService, ToastService
-├── Styles/              # app.css (Tailwind v4 input)
-└── wwwroot/
-    ├── css/
-    ├── js/
-    └── locales/         # One folder per language, one JSON file per namespace
+├── Components/   # Layout (AppPageFrame), State (AppLoader), Surface (MetaPanel)
+├── Layout/       # MainLayout
+├── Pages/        # by context: Auth/, Home/
+├── Services/     # ApiClient, ThemeService, LocalizationService, ToastService
+├── Styles/       # app.css (Tailwind v4 input)
+└── wwwroot/locales/  # one folder per language, one JSON file per namespace
 ```
 
-### Blazor Page Conventions
-
-- **All pages use code-behind** — `.razor.cs` with `[Inject]` properties (never `@inject` in `.razor`)
-- **Page state patterns:**
-  - Data pages: `PageState<T>` record struct with `LoadingState()`, `ErrorState(string)`, `DataState(T)`
-  - Form/auth pages: `bool _isLoading`, `string? _error`, `T? _data`
-- **Three rendering states** per page: loading, error, content
-- HTTP calls through `IApiClient` — `GetAsync<T>`, `PostAsync<T>`, `PutAsync<T>`, `DeleteAsync<T>`
-- Component naming: `App*` (layout), `Meta*` (surface/form), domain names for features
-
-### i18n Conventions
-
-Translations are plain JSON files fetched at runtime:
-
-```
-wwwroot/locales/
-  en/
-    common.json       # Shared: cancel, save, loading, error states
-    auth.json         # Login, register, forgot password
-    nav.json          # Navigation (loaded by MainLayout)
-    ...per-view namespaces
-  fr/  de/  ...
-```
-
-- Key naming: `namespace.element` (dot-separated, e.g., `auth.login.heading`)
-- Namespaces are singular (`booking`, not `bookings`)
-- `common.json` loaded on app start; `nav.json` / `footer.json` loaded by MainLayout
-- Page-specific namespaces loaded in `OnInitializedAsync()` per page
-
-### CSS Conventions
-
-- **Tailwind CSS v4** via `Styles/app.css`
-- Custom component classes prefixed: `meta-`, `app-`
-- Theme variables in CSS custom properties (e.g., `--primary-500`, `--accent-500`)
-- No Bootstrap
-
-## Authorization Model
-
-- Custom policy-based auth with `[VerifiedUser]` filter
-- Dynamic permission handler: `[HasRight("companies.read")]`
-- Resource access filters: `[ValidateCompanyAccess]`, `[ValidateUserAccess]`
-- Permissions defined in `AppPermissions.cs` as string constants
-- Role-to-permission mapping in `AppPermissions.ByRole` dictionary
+- **Code-behind** `.razor.cs` for all pages; inject via `[Inject]` in code-behind, never `@inject` in `.razor`.
+- **Three render states** per page: loading / error / content.
+- HTTP through `IApiClient` (`GetAsync<T>`, `PostAsync<T>`, ...).
+- **Tailwind CSS v4** via `Styles/app.css`; custom classes prefixed `app-`/`meta-`; theme via CSS variables. No Bootstrap.
+- **i18n**: JSON files in `wwwroot/locales/{lang}/{namespace}.json`; keys `namespace.element`; singular namespaces; page namespaces loaded in `OnInitializedAsync()`. Ships with `en` (add languages by adding sibling folders).
 
 ## EF Core Migrations
 
-Migrations live in `Applications/Api/Data/Migrations/`. Applied automatically at startup via `MigrateAsync()`.
+Migrations live in `Applications/Api/Data/Migrations/` and are applied automatically at startup via `MigrateAsync()` in `SeedExtensions` (skipped if the DB can't be reached).
 
 ```bash
-dotnet ef migrations add <MigrationName> \
-    --project Applications/Api \
-    --startup-project Applications/Api \
-    --output-dir Data/Migrations
+dotnet ef migrations add <Name> \
+  --project Applications/Api --startup-project Applications/Api \
+  --output-dir Data/Migrations
 ```
 
 ## Running the Project
 
 ```bash
-# Start dev database
 docker compose -f docker-compose.devdb.yml up -d
-
-# Build
-dotnet build
-
-# Run API (hosts Blazor WASM) — http://localhost:5050
-dotnet run --project Applications/Api
-
-# Run Web standalone (UI dev) — http://localhost:5129
-dotnet run --project Applications/Web
-
-# Run all tests
-dotnet test
-
-# API docs at /docs/v1 (Scalar)
+dotnet run --project Applications/Api    # API + co-hosted Blazor → http://localhost:5050
+dotnet run --project Applications/Web    # Blazor standalone (UI dev) → http://localhost:5129
+dotnet test "{{ProjectName}}.slnx"       # all suites
 ```
 
 ## Architecture Tests
 
-`Tests/Architecture.Tests` makes conventions executable — CI fails on violations:
+`Tests/Architecture.Tests` makes conventions executable — CI fails on violation. **When you add a convention, add a rule here.**
 
-- **Structural (NetArchTest):** services/mappers/jobs/validators/handlers sealed; controllers + entities not sealed; HTTP models are records; no `Dto` suffix; `ct` named/last; enum properties use `.HasConversion<string>()`; layering (Databases/Shared never depend on Api).
+- **Structural (NetArchTest):** services/mappers/jobs/validators/handlers sealed; controllers + entities not sealed; HTTP models are records; no `Dto` suffix; `ct` named/last; enum properties use `.HasConversion<string>()`; layering (`Databases.*`/`Shared.*` never depend on `Api`).
 - **Source (Roslyn):** no try/catch in controllers; no `async void`; `ConfigureAwait(false)` on every library await; file-scoped namespaces; method-body aeration.
 - **Naming:** test methods match `Subject_Scenario_Expected`.
 
-Add a rule here whenever you add a convention.
-
 ## Test Conventions
 
-- **xUnit** for .NET tests, **Playwright** for E2E, **Vitest/Jest** for JS
-- Test naming: `MethodName_Scenario_ExpectedResult`
-- One test file per service/controller: `<Resource>Tests.cs`
-- Convention tests enforce architecture rules automatically
-- Data-layer tests use `UseInMemoryDatabase()` and `NullLogger<T>.Instance`
+- **xUnit** only. Test naming `MethodName_Scenario_ExpectedResult` (three segments; digits allowed). One test class per service/controller.
+- Integration tests use `WebApplicationFactory` + `UseInMemoryDatabase`; unit tests use Moq and `NullLogger<T>.Instance`.
 
 ## Git Commit Convention
 
-Format: `Project - What has been done`
+`Project - What was done` (single scope, no body for small changes):
 
 ```
-Api - Added user registration endpoint
-Web - Added login page with validation
-Databases.Core - Added User entity
+Api - Add Widget endpoints
+Shared.Mapping - Replace AutoMapper with Mapperly
+Databases.Core - Add Widget entity
 {{ProjectName}} - Initial scaffold
 ```
 
-## Template Usage
+---
 
-1. Clone this repository
-2. Run `find . -type f -exec sed -i '' 's/{{ProjectName}}/YourProjectName/g' {} +`
-3. Run `find . -type f -exec sed -i '' 's/{{ProjectDescription}}/Your project description./g' {} +`
-4. Update `Directory.Packages.props` with your specific NuGet packages
-5. Add your bounded contexts and start building
+## Extending the Template
+
+These are **patterns to add when you need them — they are NOT in the template yet.** They come from production apps this template distills; the scaffold ships a minimal stub so you wire them in once.
+
+### JWT generation (currently stubbed)
+
+`AuthService.Register` returns a placeholder token; JWT **validation** is wired in `AuthExtensions` (reads `Jwt:Key`/`Issuer`/`Audience`), but token **generation** is not implemented. Add an `IJwtService`/`JwtService` (in `Shared/Services/Auth/`) that builds a `JwtSecurityToken`, register it, and call it from `Register`/`Login`. Set a real `Jwt:Key` in configuration (the shipped `appsettings.json` has an empty key — an empty key fails auth at request time, so configure it before running auth flows).
+
+### AuthenticatedController base class
+
+Add `Applications/Api/Authorization/AuthenticatedController.cs`:
+```csharp
+[Authorize]
+public abstract class AuthenticatedController : ControllerBase
+{
+
+    protected string CurrentUserId =>
+        User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new UnauthorizedAccessException("User identity not found.");
+
+}
+```
+Have authenticated feature controllers inherit it; keep `AuthController` on `ControllerBase` (its endpoints are public). Then add an Architecture.Tests rule that every `*Controller` either inherits `AuthenticatedController` or is explicitly allow-listed.
+
+### Richer authorization (permissions/policies)
+
+The scaffold ships `AppPermissions` (string constants like `users.read`) and `AppRoles` (`SuperAdmin`, `User`). Production apps extend this with a dynamic permission policy (`[HasRight(AppPermissions.X)]`), a verified-user filter (`[VerifiedUser]`), resource-access filters (`[ValidateWidgetAccess]`), and an `AppPermissions.ByRole` map. Add these under `Applications/Api/Authorization/` and enforce "no raw role strings in `[Authorize(Roles=...)]`" with an Architecture.Tests rule.
+
+### Role seeding & default admin
+
+`SeedExtensions` runs migrations on startup; extend it to seed `AppRoles` and a default admin user from configuration.
+
+---
+
+## Using This Template
+
+Replace the `{{ProjectName}}` and `{{ProjectDescription}}` tokens (and rename `{{ProjectName}}.slnx`). Three ways — pick one:
+
+**A. `dotnet new` (recommended for CLI / agents):**
+```bash
+dotnet new install .
+dotnet new cleanarch -n MyApp --description "My project description." -o ../MyApp
+```
+Replaces all tokens, renames the `.slnx`, and omits internal planning docs.
+
+**B. Setup script (after a plain clone):**
+```bash
+./setup.sh MyApp "My project description."        # macOS / Linux
+pwsh ./setup.ps1 -Name MyApp -Description "My project description."   # Windows / cross-platform
+```
+Replaces tokens in tracked text files and renames the `.slnx`.
+
+**C. Manual:** replace `{{ProjectName}}` and `{{ProjectDescription}}` across tracked text files and rename `{{ProjectName}}.slnx` yourself.
+
+Then: `dotnet build`, add your bounded contexts (see the recipe above), and start building.
+</content>

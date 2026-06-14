@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "dotnet-clean-arch-template",
+  "classifications": ["Web", "API", "Blazor", "Clean Architecture"],
+  "identity": "DotnetCleanArchTemplate",
+  "name": ".NET 10 Clean Architecture Template",
+  "shortName": "cleanarch",
+  "description": "A clean-architecture .NET 10 solution with ASP.NET Core API and Blazor WebAssembly frontend.",
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "preferNameDirectory": true,
+  "sourceName": "{{ProjectName}}",
+  "symbols": {
+    "description": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "A clean-architecture .NET 10 application.",
+      "description": "Short description of the project, embedded in AGENTS.md, CLAUDE.md, and README.md.",
+      "replaces": "{{ProjectDescription}}"
+    }
+  },
+  "sources": [
+    {
+      "exclude": [
+        ".git/**",
+        ".git",
+        ".vs/**",
+        ".idea/**",
+        "TestResults/**",
+        "**/bin/**",
+        "**/obj/**",
+        ".template.config/**",
+        "docs/superpowers/**"
+      ]
+    }
+  ]
+}

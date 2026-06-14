@@ -1,6 +1,6 @@
 You are working on {{ProjectName}}, a .NET 10 application with an ASP.NET Core API and a Blazor WebAssembly frontend.
 
-Read AGENTS.md at the repo root before making non-trivial changes.
+Read AGENTS.md at the repo root before making non-trivial changes (start with its "For AI Agents — Start Here" section). CONVENTIONS.md is a one-page cheat-sheet.
 
 Repository structure
 - Applications/Api: main host application, controllers, middleware, OpenAPI/Scalar, auth

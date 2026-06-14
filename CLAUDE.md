@@ -2,7 +2,7 @@
 
 {{ProjectDescription}} Built with .NET 10 + Blazor WASM.
 
-Full conventions in `AGENTS.md`. Read it before making non-trivial changes.
+Full conventions in `AGENTS.md` (start with its "For AI Agents — Start Here" section). One-page cheat-sheet: `CONVENTIONS.md`. Read before non-trivial changes.
 
 ## Stack at a glance
 
@@ -29,6 +29,14 @@ dotnet test
 ```
 
 Dev URLs: `:5050` (API), `:5050/docs/v1` (Scalar).
+
+## New project from this template
+
+```bash
+dotnet new install . && dotnet new cleanarch -n MyApp --description "..."   # or: ./setup.sh MyApp "..."
+```
+
+Replaces `{{ProjectName}}`/`{{ProjectDescription}}` and renames `{{ProjectName}}.slnx`.
 
 ## Hard rules
 

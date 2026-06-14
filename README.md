@@ -14,7 +14,7 @@
 
 <br />
 
-> **Not a toy.** This is the exact architecture, conventions, and tooling running two live SaaS products — distilled into a reusable template. Every convention here survived real-world feature velocity, multi-tenant isolation, Stripe payments, complex RBAC, GDPR compliance, and ~500+ tests. Zero warnings, zero guesswork.
+> **Not a toy.** The architecture, conventions, and tooling here are distilled from two live SaaS products (multi-tenant isolation, payments, RBAC, GDPR). The template ships a minimal-but-complete auth vertical slice plus an **executable convention suite** that fails CI on drift. Zero warnings, zero guesswork.
 
 ---
 
@@ -26,17 +26,18 @@
 │   ├── Api/                          # ASP.NET Core 10 — controllers, middleware, SignalR, Quartz
 │   └── Web/                          # Blazor WASM 10 — Tailwind v4, i18n, co-hosted
 ├── Databases/
-│   ├── Core/                         # AppDbContext, 29 entities, PK pattern, enums
-│   └── Auth/  Company/  …per-context # EF Core IEntityTypeConfiguration<T> per bounded context
+│   ├── Core/                         # AppDbContext, starter entities, PK pattern, enums
+│   └── Auth/  …per-context           # EF Core IEntityTypeConfiguration<T> per bounded context
 ├── Shared/
 │   ├── Resources/                    # HTTP models (records), FluentValidation validators, enums
 │   ├── Services/                     # Business logic — sealed, primary ctors, verb-first
-│   ├── Mapping/                      # AutoMapper wrappers — one per context
+│   ├── Mapping/                      # Mapperly source-generated mappers — one per context
 │   └── Jobs/                         # Quartz.NET background jobs
 └── Tests/
     ├── Api.Tests/                    # Integration — WebApplicationFactory + InMemory DB
-    ├── Shared.Tests/                 # Unit + convention tests (auto-enforce the rules)
-    └── Web.Tests/                    # Blazor infrastructure tests
+    ├── Architecture.Tests/           # NetArchTest + Roslyn — conventions enforced as tests
+    ├── Shared.Tests/                 # Unit tests (Moq)
+    └── Web.Tests/                    # Blazor infrastructure tests (stub)
 ```
 
 **The API co-hosts everything** — REST endpoints, Blazor WASM static files, OpenAPI/Scalar docs, SignalR hubs, and Quartz jobs. One deployable. The Web project runs standalone for UI dev with hot reload.
@@ -48,7 +49,7 @@
 ## What's Inside
 
 ### Build & infrastructure
-- `.slnx` solution (modern XML format) — 10 projects organized in 4 folders
+- `.slnx` solution (modern XML format) — 12 projects organized in 4 folders
 - `Directory.Build.props` — net10.0, Nullable, TreatWarningsAsErrors
 - `Directory.Packages.props` — **central package management**, 40+ NuGet packages pinned
 - `.editorconfig` — naming rules (`_underscore` fields, `I` prefix interfaces), var preferences, code styles
@@ -65,7 +66,8 @@
 - **Issue templates** — bug report + feature request, both with bounded context fields
 
 ### Agent instructions (AI coding assistants)
-- `AGENTS.md` — **the canonical source of truth** (~200 lines). Every convention, bounded context table, sealed-by-layer rules, controller/service/model/Blazor/i18n/EF/test conventions, startup flow, auth model, commit style. Read by Claude, Copilot, Cursor, and any agent-aware tool.
+- `AGENTS.md` — **the canonical source of truth**. Opens with a "For AI Agents — Start Here" section (commands, the end-to-end vertical-slice recipe, self-check), then every convention, plus an "Extending the Template" guide and instantiation steps. Read by Claude, Copilot, Cursor, and any agent-aware tool.
+- `CONVENTIONS.md` — one-page cheat-sheet of the hard rules
 - `CLAUDE.md` — compact Claude-specific brief with hard rules, run commands, stack summary
 - `.github/copilot-instructions.md` — GitHub Copilot workspace instructions
 
@@ -77,7 +79,7 @@
 | Service | `IAuthService` + `AuthService` in one file | Sealed, primary ctor, `ConfigureAwait(false)`, verb-first |
 | HTTP model | `GetMe`, `PostAuthRegisterRequest` | `record`, no Dto suffix, `Get*` / `{Verb}*Request` |
 | Validator | `PostAuthRegisterRequestValidator` | FluentValidation, auto-discovered, one per model |
-| Mapper | `IAuthMapper` → `AuthMapper(IMapper)` | AutoMapper wrapper + profile in one file |
+| Mapper | `IAuthMapper` → `[Mapper] sealed partial AuthMapper` | Mapperly source generator — no runtime dependency |
 | Middleware | `ExceptionMiddleware.cs` | KeyNotFound→404, InvalidOp→400, Unauthorized→401 |
 | DB config | `UserConfiguration` | Per-context assembly, constraint naming, HasConversion\<string\> |
 | Entity | `UserActionAudit` | `AuditId` + `[NotMapped] Id` alias pattern |
@@ -99,13 +101,17 @@
 
 ### Convention tests — the rules enforce themselves
 
+`Tests/Architecture.Tests` (NetArchTest + Roslyn) fails CI on any violation:
+
 ```csharp
-Services_AreSealed                       // Every *Service is sealed
-Services_NoAsyncSuffix_OnPublicMethods   // Zero Async suffix
-HttpModels_AreRecords                    // Every type in HTTP namespace is a record
-HttpModels_NoDtoSuffix                   // Zero Dto suffix
-Controllers_NoTryCatch                   // Zero try/catch in controller bodies
-TestNaming_FollowsConvention             // MethodName_Scenario_ExpectedResult
+Services_Concrete_AreSealed                   // services/mappers/jobs/validators/handlers sealed
+Controllers_Concrete_AreNotSealed             // controllers + entities never sealed
+HttpModels_All_AreRecords                     // every HTTP type is a record; no Dto suffix
+Controllers_Contain_NoTryCatch                // zero try/catch in controllers
+LibraryAwaits_Use_ConfigureAwaitFalse         // ConfigureAwait(false) across Shared.*/Databases.*
+MethodBodies_All_AreAerated                   // blank line after { and before } in methods
+AllFiles_Use_FileScopedNamespaces             // file-scoped namespaces only
+TestMethods_All_FollowSubjectScenarioExpected // Method_Scenario_Expected naming
 ```
 
 These run in CI at every push. They catch violations before code review.
@@ -115,11 +121,14 @@ These run in CI at every push. They catch violations before code review.
 ## Quick Start
 
 ```bash
-# 1. Clone and rename
-git clone https://github.com/nathan5580/dotnet-clean-arch-template.git MySaaS
-cd MySaaS
-find . -type f -name '*.slnx' -o -name '*.csproj' -o -name '*.md' -o -name '*.json' -o -name '*.razor' -o -name '*.cs' -o -name '*.yml' -o -name '*.html' -o -name 'Dockerfile' | xargs sed -i '' 's/{{ProjectName}}/MySaaS/g'
-find . -type f -name '*.md' | xargs sed -i '' 's/{{ProjectDescription}}/My SaaS product description./g'
+# 1. Create your project from the template — pick ONE:
+#    A. dotnet new (recommended)
+dotnet new install .
+dotnet new cleanarch -n MySaaS --description "My SaaS product." -o ../MySaaS && cd ../MySaaS
+#    B. clone + setup script (replaces {{ProjectName}}/{{ProjectDescription}}, renames the .slnx)
+# git clone https://github.com/nathan5580/dotnet-clean-arch-template.git MySaaS && cd MySaaS
+# ./setup.sh MySaaS "My SaaS product."                            # macOS/Linux
+# pwsh ./setup.ps1 -Name MySaaS -Description "My SaaS product."   # Windows
 
 # 2. Start dev database
 docker compose -f docker-compose.devdb.yml up -d
@@ -135,7 +144,7 @@ dotnet run --project Applications/Web        # → http://localhost:5129 (standa
 open http://localhost:5050/docs/v1           # Scalar UI
 
 # 6. Tests
-dotnet test                                   # 3 projects, convention tests included
+dotnet test                                  # 4 test projects, convention tests included
 ```
 
 ---
@@ -149,7 +158,7 @@ dotnet test                                   # 3 projects, convention tests inc
 4. Shared/Resources/HTTP/YourContext/POST/         PostYourResourceRequest records
 5. Shared/Resources/Validators/YourContext/        FluentValidation validators
 6. Shared/Services/YourContext/YourService.cs      IYourService + sealed impl
-7. Shared/Mapping/YourContext/YourMapper.cs        AutoMapper profile + wrapper
+7. Shared/Mapping/YourContext/YourMapper.cs        [Mapper] sealed partial (Mapperly)
 8. Applications/Api/Controllers/YourContext/       YourController.cs
 9. Applications/Api/Extensions/ServiceExtensions   Register DI
 10. Applications/Web/Pages/YourContext/            Blazor pages + code-behind
@@ -189,7 +198,7 @@ Every step follows the same verb-first naming, same file-scoped namespace, same 
 | Database | SQL Server via EF Core 10 (swap to PostgreSQL with 2 lines) |
 | Auth | ASP.NET Identity + JWT |
 | Validation | FluentValidation (auto-discovered) |
-| Mapping | AutoMapper (wrapped per context) |
+| Mapping | Mapperly (source generator, per context) |
 | Jobs | Quartz.NET |
 | API Docs | Scalar |
 | Logging | Serilog (console + file) |
