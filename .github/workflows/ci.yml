@@ -42,12 +42,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: Applications/Web/package-lock.json
 
       - name: Install frontend dependencies
         working-directory: Applications/Web
-        run: npm ci
+        run: npm install
 
       - name: Restore solution
         run: dotnet restore {{ProjectName}}.slnx
