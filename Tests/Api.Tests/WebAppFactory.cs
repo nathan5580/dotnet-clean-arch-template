@@ -5,10 +5,7 @@ using Databases.Core;
 using Databases.Core.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Resources.Auth;
@@ -40,7 +37,6 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
                 ["Jwt:Audience"] = "test-audience",
                 ["Jwt:AccessTokenExpiryMinutes"] = "60"
             });
-
         });
 
         builder.ConfigureServices(services =>
@@ -85,9 +81,7 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
                     IssuerSigningKey = testKey,
                     ClockSkew = TimeSpan.Zero
                 };
-
             });
-
         });
     }
 

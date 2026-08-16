@@ -17,9 +17,9 @@ One-page quick reference. Full rationale + the vertical-slice recipe live in [`A
 | Async | `async Task` | `async void` |
 | Warnings | zero (`TreatWarningsAsErrors=true`) | suppress without reason |
 
-## Method-body aeration
+## Method-body spacing
 
-Blank line **between logical stages** — validate, load, apply, persist, map, return. **No** blank line right after the opening `{` or right before the closing `}` — **methods only** (not types or `if`/`for`/`try`). `dotnet format` won't add these; write them by hand.
+Blank line **between logical stages** — validate, load, apply, persist, map, return — at least one when a body has more than one statement. **No** blank line right after the opening `{` or right before the closing `}`. **Method-like bodies only** (methods, constructors, accessors, lambdas — not types or `if`/`for`/`try`). `dotnet format` won't add these; write them by hand.
 
 ```csharp
 public GetMe ToGetMe(ApplicationUser user)
@@ -29,6 +29,17 @@ public GetMe ToGetMe(ApplicationUser user)
     return Map(user, roles);
 }
 ```
+
+## Enforced cleanliness (Architecture.Tests + dotnet format)
+
+- No dead public types/constants (`PublicSymbols_All_AreReferenced`)
+- No `DateTime.Now` — `DateTime.UtcNow` only
+- Logging uses structured placeholders, never interpolated strings
+- Controllers: `[ProducesResponseType]` on every action
+- Blazor: no `@inject`, no `@code` in `.razor` — code-behind only
+- Web: inject `HttpClient` (the one from `Program.cs`); never `new HttpClient()`
+- GlobalUsings: framework-only, no `System.*` entries
+- Unused usings / using order / naming: enforced by `dotnet format --verify-no-changes`
 
 ## Layout (bounded contexts)
 

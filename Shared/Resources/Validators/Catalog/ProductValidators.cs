@@ -1,4 +1,3 @@
-using FluentValidation;
 using Shared.Resources.HTTP.Catalog.POST;
 using Shared.Resources.HTTP.Catalog.PUT;
 
@@ -9,6 +8,7 @@ public sealed class PostProductRequestValidator : AbstractValidator<PostProductR
     public PostProductRequestValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Category).IsInEnum();
     }
@@ -19,6 +19,7 @@ public sealed class PutProductRequestValidator : AbstractValidator<PutProductReq
     public PutProductRequestValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Category).IsInEnum();
     }

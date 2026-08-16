@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 namespace Api.Extensions;
@@ -15,9 +13,12 @@ public static class AuthExtensions
                 "Configure a strong secret (>= 32 bytes) in appsettings.Development.json (dev) " +
                 "or via a secret store / environment variable (prod) before starting the API.");
 
+        services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         })
         .AddJwtBearer(options =>
@@ -33,15 +34,6 @@ public static class AuthExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                 ClockSkew = TimeSpan.Zero
             };
-        });
-    }
-
-    public static void AddAppAuthorization(this IServiceCollection services)
-    {
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy(AppPermissions.UsersRead, policy =>
-                policy.RequireClaim("permission", AppPermissions.UsersRead));
         });
     }
 }

@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Components;
 using Shared.Resources.Enums;
 using Shared.Resources.HTTP.Catalog.GET;
 using Shared.Resources.HTTP.Catalog.POST;
-using Web.Services;
 
 namespace Web.Pages.Products;
 

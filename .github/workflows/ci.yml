@@ -62,6 +62,9 @@ jobs:
       - name: Test shared services
         run: dotnet test Tests/Shared.Tests/Shared.Tests.csproj --configuration Release --no-build --collect "XPlat Code Coverage" --settings coverlet.runsettings --results-directory TestResults/ --logger "trx;LogFileName=shared-tests.trx"
 
+      - name: Test architecture conventions
+        run: dotnet test Tests/Architecture.Tests/Architecture.Tests.csproj --configuration Release --no-build --results-directory TestResults/ --logger "trx;LogFileName=architecture-tests.trx"
+
       - name: Test Web project
         run: dotnet test Tests/Web.Tests/Web.Tests.csproj --configuration Release --no-build --collect "XPlat Code Coverage" --settings coverlet.runsettings --results-directory TestResults/ --logger "trx;LogFileName=web-tests.trx"
 

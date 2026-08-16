@@ -1,3 +1,5 @@
+using Shared.Resources.HTTP.Auth.GET;
+
 namespace Shared.Mapping.Auth;
 
 public interface IAuthMapper

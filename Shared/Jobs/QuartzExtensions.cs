@@ -1,5 +1,3 @@
-using Quartz;
-
 namespace Shared.Jobs;
 
 public static class QuartzExtensions

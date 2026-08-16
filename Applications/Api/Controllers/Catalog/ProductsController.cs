@@ -1,5 +1,3 @@
-using Api.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Shared.Resources.HTTP.Catalog.GET;
 using Shared.Resources.HTTP.Catalog.POST;
 using Shared.Resources.HTTP.Catalog.PUT;
@@ -9,7 +7,6 @@ using Shared.Services.Catalog;
 namespace Api.Controllers.Catalog;
 
 [ApiController]
-[ApiVersion("1.0")]
 [Tags(OpenApiTagNames.Catalog)]
 [Route("api/products")]
 [Produces("application/json")]

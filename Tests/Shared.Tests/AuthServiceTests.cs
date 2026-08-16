@@ -1,9 +1,7 @@
-using Databases.Core;
 using Databases.Core.Entities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Shared.Mapping.Auth;
 using Shared.Resources.Auth;
 using Shared.Resources.HTTP.Auth.POST;
 using Shared.Services.Auth;
@@ -12,15 +10,6 @@ namespace Shared.Tests;
 
 public sealed class AuthServiceTests
 {
-    private static AppDbContext CreateDbContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
     private static Mock<UserManager<ApplicationUser>> CreateUserManagerMock()
     {
         var store = new Mock<IUserStore<ApplicationUser>>();
@@ -32,7 +21,6 @@ public sealed class AuthServiceTests
     [Fact]
     public async Task Register_WithValidRequest_ReturnsToken()
     {
-        var db = CreateDbContext();
         var userManager = CreateUserManagerMock();
         var jwt = new Mock<IJwtService>();
 
@@ -47,7 +35,7 @@ public sealed class AuthServiceTests
         jwt.Setup(j => j.GenerateToken(It.IsAny<ApplicationUser>(), It.IsAny<IList<string>>()))
             .Returns("generated-token");
 
-        var service = new AuthService(db, userManager.Object, jwt.Object, NullLogger<AuthService>.Instance);
+        var service = new AuthService(userManager.Object, jwt.Object, new AuthMapper(), NullLogger<AuthService>.Instance);
         var request = new PostAuthRegisterRequest
         {
             Email = "new@example.com",
@@ -66,14 +54,13 @@ public sealed class AuthServiceTests
     [Fact]
     public async Task Register_WithExistingEmail_ThrowsInvalidOperationException()
     {
-        var db = CreateDbContext();
         var userManager = CreateUserManagerMock();
         var jwt = new Mock<IJwtService>();
 
         userManager.Setup(m => m.FindByEmailAsync(It.IsAny<string>()))
             .ReturnsAsync(new ApplicationUser { Email = "duplicate@example.com" });
 
-        var service = new AuthService(db, userManager.Object, jwt.Object, NullLogger<AuthService>.Instance);
+        var service = new AuthService(userManager.Object, jwt.Object, new AuthMapper(), NullLogger<AuthService>.Instance);
         var request = new PostAuthRegisterRequest
         {
             Email = "duplicate@example.com",
@@ -88,7 +75,6 @@ public sealed class AuthServiceTests
     [Fact]
     public async Task Login_WithBadPassword_ThrowsUnauthorizedAccessException()
     {
-        var db = CreateDbContext();
         var userManager = CreateUserManagerMock();
         var jwt = new Mock<IJwtService>();
 
@@ -97,7 +83,7 @@ public sealed class AuthServiceTests
         userManager.Setup(m => m.CheckPasswordAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
             .ReturnsAsync(false);
 
-        var service = new AuthService(db, userManager.Object, jwt.Object, NullLogger<AuthService>.Instance);
+        var service = new AuthService(userManager.Object, jwt.Object, new AuthMapper(), NullLogger<AuthService>.Instance);
         var request = new PostAuthLoginRequest
         {
             Email = "user@example.com",

@@ -4,6 +4,4 @@ public static class OpenApiTagNames
 {
     public const string Auth = "Auth";
     public const string Catalog = "Catalog";
-    public const string Health = "Health";
-    // Add your tag names here
 }

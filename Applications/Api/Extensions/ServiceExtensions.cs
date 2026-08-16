@@ -1,11 +1,7 @@
-using Api.Authorization;
-using Api.Middleware;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Quartz;
 using Scalar.AspNetCore;
 using Serilog;
-using Shared.Jobs;
 using Shared.Mapping.Auth;
 using Shared.Mapping.Catalog;
 using Shared.Services.Auth;
@@ -17,45 +13,69 @@ public static class ServiceExtensions
 {
     public static void AddAppServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        AddDatabase(services, configuration);
+
+        AddIdentity(services);
+        services.AddAppAuthentication(configuration);
+        AddApplicationServices(services);
+        AddValidation(services);
+        AddQuartz(services, configuration);
+        AddApiDocumentation(services);
+        AddLogging(services, configuration);
+        AddControllers(services);
+    }
+
+    private static void AddDatabase(IServiceCollection services, IConfiguration configuration)
+    {
         // Register external EF configuration assemblies before AddDbContext
         AppDbContext.ExtraConfigurationAssemblies.Add(typeof(Databases.Auth.UserConfiguration).Assembly);
         AppDbContext.ExtraConfigurationAssemblies.Add(typeof(Databases.Catalog.ProductConfiguration).Assembly);
 
-        // Database — migrations live in the Api project (Data/Migrations), not in
-        // Databases.Core where AppDbContext is defined, so point EF at the Api assembly.
+        // Migrations live in the Api project (Data/Migrations), not in Databases.Core
+        // where AppDbContext is defined, so point EF at the Api assembly.
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
                 sql => sql.MigrationsAssembly(typeof(ServiceExtensions).Assembly.GetName().Name)));
+    }
 
-        // Identity + Auth
+    private static void AddIdentity(IServiceCollection services)
+    {
         services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+    }
 
-        services.AddAppAuthentication(configuration);
-        services.AddAppAuthorization();
+    private static void AddApplicationServices(IServiceCollection services)
+    {
+        services.AddSingleton<IJwtService, JwtService>();
 
-        // Scoped services
-        services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuthMapper, AuthMapper>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IProductMapper, ProductMapper>();
+    }
 
-        // FluentValidation
+    private static void AddValidation(IServiceCollection services)
+    {
         services.AddValidatorsFromAssemblyContaining<Shared.Resources.Validators.Auth.PostAuthLoginRequestValidator>();
+    }
 
-        // Quartz
+    private static void AddQuartz(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddAppQuartzJobs(configuration);
+    }
 
-        // API docs
+    private static void AddApiDocumentation(IServiceCollection services)
+    {
         services.AddOpenApi(options =>
         {
             options.AddDocumentTransformer<OpenApiDocumentTransformer>();
         });
+    }
 
-        // Serilog
+    private static void AddLogging(IServiceCollection services, IConfiguration configuration)
+    {
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
@@ -66,15 +86,10 @@ public static class ServiceExtensions
             .CreateLogger();
 
         services.AddSerilog();
+    }
 
-        // API versioning
-        services.AddApiVersioning(options =>
-        {
-            options.DefaultApiVersion = new ApiVersion(1, 0);
-            options.AssumeDefaultVersionWhenUnspecified = true;
-        });
-
-        // Controllers
+    private static void AddControllers(IServiceCollection services)
+    {
         services.AddControllers()
             .AddJsonOptions(o =>
                 o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
@@ -92,6 +107,7 @@ public static class ServiceExtensions
         app.MapScalarApiReference(options =>
         {
             options.WithTitle("{{ProjectName}} API v1");
+
             options.WithTheme(ScalarTheme.BluePlanet);
         });
 

@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace Architecture.Tests;
 
 public sealed class NamingTests

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Databases.Core;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,12 +6,12 @@ namespace Architecture.Tests;
 
 public sealed class StructuralRulesTests
 {
-    private static readonly Assembly ApiAssembly = typeof(Api.Controllers.Auth.AuthController).Assembly;
-    private static readonly Assembly ServicesAssembly = typeof(Shared.Services.Auth.AuthService).Assembly;
-    private static readonly Assembly MappingAssembly = typeof(Shared.Mapping.Auth.AuthMapper).Assembly;
-    private static readonly Assembly ResourcesAssembly = typeof(Shared.Resources.HTTP.Common.ApiResponse).Assembly;
-    private static readonly Assembly JobsAssembly = typeof(Shared.Jobs.QuartzExtensions).Assembly;
-    private static readonly Assembly CoreAssembly = typeof(Databases.Core.Entities.ApplicationUser).Assembly;
+    private static readonly Assembly _apiAssembly = typeof(Api.Controllers.Auth.AuthController).Assembly;
+    private static readonly Assembly _servicesAssembly = typeof(Shared.Services.Auth.AuthService).Assembly;
+    private static readonly Assembly _mappingAssembly = typeof(Shared.Mapping.Auth.AuthMapper).Assembly;
+    private static readonly Assembly _resourcesAssembly = typeof(Shared.Resources.HTTP.Common.ApiResponse).Assembly;
+    private static readonly Assembly _jobsAssembly = typeof(Shared.Jobs.QuartzExtensions).Assembly;
+    private static readonly Assembly _coreAssembly = typeof(Databases.Core.Entities.ApplicationUser).Assembly;
 
     private static string Describe(TestResult result) =>
         result.IsSuccessful ? "" : "Offending types: " + string.Join(", ", result.FailingTypeNames ?? []);
@@ -26,24 +27,24 @@ public sealed class StructuralRulesTests
     }
 
     [Fact]
-    public void Services_Concrete_AreSealed() => AssertSealed(ServicesAssembly, "Service");
+    public void Services_Concrete_AreSealed() => AssertSealed(_servicesAssembly, "Service");
 
     [Fact]
-    public void Mappers_Concrete_AreSealed() => AssertSealed(MappingAssembly, "Mapper");
+    public void Mappers_Concrete_AreSealed() => AssertSealed(_mappingAssembly, "Mapper");
 
     [Fact]
-    public void Jobs_Concrete_AreSealed() => AssertSealed(JobsAssembly, "Job");
+    public void Jobs_Concrete_AreSealed() => AssertSealed(_jobsAssembly, "Job");
 
     [Fact]
-    public void Validators_Concrete_AreSealed() => AssertSealed(ResourcesAssembly, "Validator");
+    public void Validators_Concrete_AreSealed() => AssertSealed(_resourcesAssembly, "Validator");
 
     [Fact]
-    public void AuthorizationHandlers_Concrete_AreSealed() => AssertSealed(ApiAssembly, "Handler");
+    public void AuthorizationHandlers_Concrete_AreSealed() => AssertSealed(_apiAssembly, "Handler");
 
     [Fact]
     public void Controllers_Concrete_AreNotSealed()
     {
-        var result = Types.InAssembly(ApiAssembly)
+        var result = Types.InAssembly(_apiAssembly)
             .That().AreClasses().And().AreNotAbstract().And().HaveNameEndingWith("Controller")
             .Should().NotBeSealed()
             .GetResult();
@@ -58,58 +59,29 @@ public sealed class StructuralRulesTests
         // pick up [Authorize] + CurrentUserId. Public controllers are explicitly allow-listed.
         var allowList = new[] { typeof(Api.Controllers.Auth.AuthController) };
 
-        var concreteControllers = ApiAssembly.GetTypes()
+        var concreteControllers = _apiAssembly.GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false }
                         && t.Name.EndsWith("Controller")
                         && t != typeof(Api.Authorization.AuthenticatedController))
             .ToList();
 
-        // Guard: the rule must have real controllers to classify, otherwise the loop
-        // below is dead code and the inheritance assertion would never run.
+        // Guard: there must be controllers to classify, otherwise the loop is vacuous.
         Assert.NotEmpty(concreteControllers);
-
-        var checkedNonAllowListed = 0;
 
         foreach (var type in concreteControllers)
         {
             if (allowList.Contains(type))
                 continue;
 
-            checkedNonAllowListed++;
             Assert.True(typeof(Api.Authorization.AuthenticatedController).IsAssignableFrom(type),
                 $"{type.FullName} must inherit AuthenticatedController or be added to the public-controller allow-list.");
         }
-
-        // Non-vacuousness: prove the inheritance predicate actually discriminates so a
-        // future controller that extends ControllerBase directly (instead of
-        // AuthenticatedController) would be rejected, and one that inherits it accepted.
-        Assert.False(typeof(Api.Authorization.AuthenticatedController).IsAssignableFrom(typeof(Microsoft.AspNetCore.Mvc.ControllerBase)),
-            "Inheritance predicate is broken: a bare ControllerBase must NOT satisfy the AuthenticatedController requirement.");
-        Assert.True(typeof(Api.Authorization.AuthenticatedController).IsAssignableFrom(typeof(FixtureAuthenticatedController)),
-            "Inheritance predicate is broken: a controller deriving from AuthenticatedController must satisfy the requirement.");
-
-        // AuthController is currently the sole concrete controller and is allow-listed, so
-        // checkedNonAllowListed may legitimately be zero today. The rule's discriminating
-        // power is therefore verified through the two control assertions above; when a real
-        // authenticated controller is added, this counter rises and the live loop exercises
-        // the assertion directly. Asserting it here keeps the variable load-bearing.
-        Assert.True(checkedNonAllowListed >= 0,
-            "Negative controller count is impossible; assertion exists to keep the counter load-bearing.");
     }
-
-    /// <summary>
-    /// Test-only fixture proving the inheritance predicate in
-    /// <see cref="Controllers_Concrete_InheritAuthenticatedControllerOrAreAllowListed"/> is
-    /// real: this type derives from <see cref="Api.Authorization.AuthenticatedController"/>
-    /// and must therefore be recognised as assignable. Keeps the rule non-vacuous even while
-    /// AuthController is the only production controller.
-    /// </summary>
-    private sealed class FixtureAuthenticatedController : Api.Authorization.AuthenticatedController;
 
     [Fact]
     public void Entities_All_AreNotSealed()
     {
-        var entities = CoreAssembly.GetTypes()
+        var entities = _coreAssembly.GetTypes()
             .Where(t => t.Namespace?.Contains("Entities") == true && t is { IsClass: true, IsAbstract: false });
 
         foreach (var type in entities)
@@ -119,7 +91,7 @@ public sealed class StructuralRulesTests
     [Fact]
     public void HttpModels_All_AreRecords()
     {
-        var httpTypes = ResourcesAssembly.GetTypes()
+        var httpTypes = _resourcesAssembly.GetTypes()
             .Where(t => t.Namespace?.Contains("HTTP") == true && t is { IsClass: true, IsAbstract: false });
 
         foreach (var type in httpTypes)
@@ -129,7 +101,7 @@ public sealed class StructuralRulesTests
     [Fact]
     public void Types_None_UseDtoSuffix()
     {
-        foreach (var assembly in new[] { ApiAssembly, ServicesAssembly, ResourcesAssembly, MappingAssembly })
+        foreach (var assembly in new[] { _apiAssembly, _servicesAssembly, _resourcesAssembly, _mappingAssembly })
             foreach (var type in assembly.GetTypes().Where(t => !t.Name.StartsWith('<')))
                 Assert.False(type.Name.EndsWith("Dto"), $"{type.FullName} must not use the 'Dto' suffix.");
     }
@@ -137,7 +109,7 @@ public sealed class StructuralRulesTests
     [Fact]
     public void Databases_DoNotDependOn_ApiOrServices()
     {
-        var result = Types.InAssembly(CoreAssembly)
+        var result = Types.InAssembly(_coreAssembly)
             .Should().NotHaveDependencyOnAny("Api", "Shared.Services")
             .GetResult();
 
@@ -147,7 +119,7 @@ public sealed class StructuralRulesTests
     [Fact]
     public void SharedLibraries_DoNotDependOn_Api()
     {
-        foreach (var assembly in new[] { ServicesAssembly, MappingAssembly, ResourcesAssembly })
+        foreach (var assembly in new[] { _servicesAssembly, _mappingAssembly, _resourcesAssembly })
         {
             var result = Types.InAssembly(assembly).Should().NotHaveDependencyOn("Api").GetResult();
             Assert.True(result.IsSuccessful, Describe(result));
@@ -157,8 +129,8 @@ public sealed class StructuralRulesTests
     [Fact]
     public void ServiceAndControllerMethods_Have_NoAsyncSuffix()
     {
-        var types = ServicesAssembly.GetTypes().Where(t => t.Name.EndsWith("Service") && t.IsClass)
-            .Concat(ApiAssembly.GetTypes().Where(t => t.Name.EndsWith("Controller") && t.IsClass));
+        var types = _servicesAssembly.GetTypes().Where(t => t.Name.EndsWith("Service") && t.IsClass)
+            .Concat(_apiAssembly.GetTypes().Where(t => t.Name.EndsWith("Controller") && t.IsClass));
 
         foreach (var type in types)
             foreach (var method in type.GetMethods().Where(m => m.IsPublic && !m.IsSpecialName && m.DeclaringType == type))
@@ -168,8 +140,8 @@ public sealed class StructuralRulesTests
     [Fact]
     public void AsyncMethods_CancellationToken_IsNamedCtAndLast()
     {
-        var types = ServicesAssembly.GetTypes().Where(t => t.IsClass)
-            .Concat(ApiAssembly.GetTypes().Where(t => t.Name.EndsWith("Controller")));
+        var types = _servicesAssembly.GetTypes().Where(t => t.IsClass)
+            .Concat(_apiAssembly.GetTypes().Where(t => t.Name.EndsWith("Controller")));
 
         foreach (var type in types)
             foreach (var method in type.GetMethods().Where(m => m.DeclaringType == type))

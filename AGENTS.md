@@ -17,7 +17,7 @@
 - No `Async` suffix on method names. No `Dto` suffix on types. No `try/catch` in controllers (throw; `ExceptionMiddleware` maps it).
 - HTTP models are `record`, organized `HTTP/{Context}/{Verb}/`.
 - `ConfigureAwait(false)` on every `await` in library projects (`Shared.*`, `Databases.*`). `CancellationToken ct` is the last parameter.
-- **Method-body aeration:** blank line between logical stages (validate → load → apply → persist → map/return), **no** blank line right after a method's opening `{` or right before its closing `}` (methods only — not types or control-flow blocks). `dotnet format` will NOT add these; write them by hand.
+- **Method-body spacing:** blank lines separate logical stages (validate → load → apply → persist → map/return) inside a method-like body — at least one blank line between stages when a body has more than one statement, never right after the opening `{` or right before the closing `}` (methods, constructors, accessors, lambdas — not types or control-flow blocks). `dotnet format` will NOT enforce this; write them by hand.
 - `TreatWarningsAsErrors=true` — the build is zero-warning.
 
 **Commands:**
@@ -42,7 +42,7 @@ Scalar API docs: `http://localhost:5050/docs/v1`.
 10. **Tests** — unit (`Tests/Shared.Tests`) + integration (`Tests/Api.Tests`), names `Method_Scenario_Expected`.
 11. **Self-check** — `dotnet test`. Green = conventions satisfied.
 
-**Commit format:** `Project - What was done` (e.g. `Api - Add Widget endpoints`). Single scope, no body for small changes.
+**Commit format:** `Project - What was done` (e.g. `Api - Add Widget endpoints`). Single scope, no body for small changes. PR titles follow the same format (enforced by `pr-title-lint.yml`).
 
 ---
 
@@ -56,7 +56,7 @@ A single deployable: an **ASP.NET Core 10 Web API** (`Api`) that co-hosts a **Bl
 {{ProjectName}}/
 ├── Applications/
 │   ├── Api/                          # ASP.NET Core Web API (co-hosts Blazor WASM)
-│   │   ├── Authorization/            # AppPermissions, AppRoles (string constants)
+│   │   ├── Authorization/            # AuthenticatedController (authorized base)
 │   │   ├── Controllers/              # Organized by bounded context subfolder
 │   │   ├── Extensions/               # Service registration, middleware pipeline, seeding
 │   │   ├── Middleware/               # ExceptionMiddleware
@@ -66,7 +66,7 @@ A single deployable: an **ASP.NET Core 10 Web API** (`Api`) that co-hosts a **Bl
 │       ├── Components/               # Layout, State, Surface components
 │       ├── Layout/                   # MainLayout
 │       ├── Pages/                    # Organized by bounded context
-│       ├── Services/                 # ApiClient, ThemeService, LocalizationService, ToastService
+│       ├── Services/                 # ApiClient, LocalizationService, ToastService
 │       ├── Styles/                   # app.css (Tailwind v4 input)
 │       └── wwwroot/                  # Static assets + i18n locale files
 ├── Databases/
@@ -108,9 +108,9 @@ All code is organized by business context across every layer:
 - **`GlobalUsings.cs`** per project for framework imports and entity aliases.
 - **KISS**; comments only where they earn their keep.
 
-### Method-Body Aeration
+### Method-Body Spacing
 
-Every method reads as a sequence of small, visible stages: validate or normalize, load state, apply the change, persist or call the boundary, then map and return. Leave a blank line between those stages when a method has more than one; never put a blank line right after the opening `{` or right before the closing `}`. Type bodies and control-flow blocks (`if`/`for`/`try`) stay compact.
+Every method-like body reads as a sequence of small, visible stages: validate or normalize, load state, apply the change, persist or call the boundary, then map and return. Leave a blank line between those stages when a body has more than one statement; never put a blank line right after the opening `{` or right before the closing `}`. Applies to methods, constructors, accessors, and lambdas. Type bodies and control-flow blocks (`if`/`for`/`try`) stay compact.
 
 ```csharp
 public GetMe ToGetMe(ApplicationUser user)
@@ -121,7 +121,7 @@ public GetMe ToGetMe(ApplicationUser user)
 }
 ```
 
-Enforced by `Tests/Architecture.Tests` (Roslyn): multi-statement method bodies must separate at least one stage with a blank line, and no method body may carry a blank line at its braces. `dotnet format` does not add these blank lines — write them by hand.
+Enforced by `Tests/Architecture.Tests` (Roslyn): multi-statement method-like bodies must separate at least one stage with a blank line, and no body may carry a blank line at its braces. `dotnet format` does not add these blank lines — write them by hand.
 
 ### `sealed` Convention
 
@@ -152,7 +152,9 @@ Enforced by `Tests/Architecture.Tests` (Roslyn): multi-statement method bodies m
 ### Services
 
 - Interface + impl in one file. Primary constructors. Method names mirror controllers.
-- `ConfigureAwait(false)` on every library `await`. `CancellationToken ct` last. Every `catch` logs. No `async void`.
+- **Lifetimes:** stateless services are Singleton (`JwtService`), stateful are Scoped. Never Transient by default.
+- `ConfigureAwait(false)` on every library `await`. `CancellationToken ct` last. Every `catch` logs. No `async void`. Logging uses structured placeholders — never interpolated strings in `Log*` calls.
+- `DateTime.UtcNow` only — `DateTime.Now` is a convention violation (enforced).
 
 ### Validators
 
@@ -179,7 +181,7 @@ public Guid WidgetId { get; set; }
 [NotMapped]
 public Guid Id { get => WidgetId; set => WidgetId = value; }
 ```
-(For Identity-derived entities whose base already declares `Id`, use `public new Guid Id { ... }`.)
+Identity-derived entities (`ApplicationUser`, `ApplicationRole`) keep the base string `Id` — no Guid facade: Identity is string-keyed, and a `[NotMapped]` Guid shadow only adds conversions with zero model benefit.
 
 ## Blazor WASM Frontend Conventions
 
@@ -188,12 +190,12 @@ Web/
 ├── Components/   # Layout (AppPageFrame), State (AppLoader), Surface (MetaPanel)
 ├── Layout/       # MainLayout
 ├── Pages/        # by context: Auth/, Home/
-├── Services/     # ApiClient, ThemeService, LocalizationService, ToastService
+├── Services/     # ApiClient, LocalizationService, ToastService
 ├── Styles/       # app.css (Tailwind v4 input)
 └── wwwroot/locales/  # one folder per language, one JSON file per namespace
 ```
 
-- **Code-behind** `.razor.cs` for all pages; inject via `[Inject]` in code-behind, never `@inject` in `.razor`.
+- **Code-behind** `.razor.cs` for all components and pages — no `@code` blocks, no `@inject` in `.razor`. Inject via `[Inject]` in the code-behind (enforced).
 - **Three render states** per page: loading / error / content.
 - HTTP through `IApiClient` (`GetAsync<T>`, `PostAsync<T>`, ...).
 - **Tailwind CSS v4** via `Styles/app.css`; custom classes prefixed `app-`/`meta-`; theme via CSS variables. No Bootstrap.
@@ -223,8 +225,28 @@ dotnet test "{{ProjectName}}.slnx"       # all suites
 `Tests/Architecture.Tests` makes conventions executable — CI fails on violation. **When you add a convention, add a rule here.**
 
 - **Structural (NetArchTest):** services/mappers/jobs/validators/handlers sealed; controllers + entities not sealed; HTTP models are records; no `Dto` suffix; `ct` named/last; enum properties use `.HasConversion<string>()`; layering (`Databases.*`/`Shared.*` never depend on `Api`).
-- **Source (Roslyn):** no try/catch in controllers; no `async void`; `ConfigureAwait(false)` on every library await; file-scoped namespaces; stage-separated method bodies (`MethodBodies_Separate_LogicalStages`).
+- **Source (Roslyn):** no try/catch in controllers; no `async void`; `ConfigureAwait(false)` on every library await; file-scoped namespaces; stage-separated method-like bodies (`MethodLikeBodies_Separate_LogicalStages`); `[ProducesResponseType]` on every action; no dead public symbols; no `@inject` or `@code` in `.razor` (code-behind instead); pages have code-behinds; no ad-hoc `new HttpClient` in Web; no `DateTime.Now`; structured logging placeholders; no `System.*` global usings.
+- **Format (enforced by CI):** `dotnet format --verify-no-changes` — unused usings, using ordering, and naming rules are real (warning severity).
 - **Naming:** test methods match `Subject_Scenario_Expected`.
+
+## Known Wrinkles
+
+Honest list of template compromises — know them before they bite:
+
+- **`AppDbContext.ExtraConfigurationAssemblies`** is a static, mutable list populated in `ServiceExtensions.AddDatabase` before `AddDbContext`. EF configs outside `Databases.Core` are not auto-discovered, so each context's assembly must be registered here. Consequence: `dotnet ef` design-time logs a "no `IEntityTypeConfiguration` found in Databases.Core" warning — harmless; migrations diff against the snapshot, not the live model.
+- **Migrations** live in `Applications/Api/Data/Migrations` while `AppDbContext` lives in `Databases.Core` — the `MigrationsAssembly` option points EF at the Api assembly.
+- **`SeedDatabase`** swallows seeding/migration failures outside Production (logs a warning; the app still starts). In Production it rethrows — fail fast.
+
+## Non-Conventions (assumed & deliberate)
+
+KISS means saying no. These are intentionally NOT in the template — do not add them "just in case":
+
+- No `Repository`/`UnitOfWork` — `AppDbContext` is the unit of work; services query it directly.
+- No MediatR/CQRS — plain services with verb-first methods.
+- No `Result<T>`/custom error types — services throw; `ExceptionMiddleware` maps to HTTP.
+- No runtime mapper — Mapperly source generation only.
+- No API versioning — add `Asp.Versioning` only when a second API version exists.
+- No refresh tokens, permission policies, or audit trail — add them with the feature that needs them (see *Extending the Template*).
 
 ## Test Conventions
 
@@ -256,11 +278,11 @@ The **auth vertical is fully implemented** — use it as the worked example. The
 
 ### Richer authorization (permissions/policies)
 
-The scaffold ships `AppPermissions` (string constants like `users.read`). Production apps extend this with a dynamic permission policy (`[HasRight(AppPermissions.X)]`), a verified-user filter (`[VerifiedUser]`), resource-access filters (`[ValidateWidgetAccess]`), and an `AppPermissions.ByRole` map. Add these under `Applications/Api/Authorization/` and enforce "no raw role strings in `[Authorize(Roles=...)]`" with an Architecture.Tests rule.
+The template does not ship a permission system — a policy that can never pass is worse than none. Production apps add `AppPermissions` constants, a dynamic permission policy (`[HasRight(AppPermissions.X)]`), a verified-user filter (`[VerifiedUser]`), resource-access filters (`[ValidateWidgetAccess]`), and an `AppPermissions.ByRole` map under `Applications/Api/Authorization/`, and enforce "no raw role strings in `[Authorize(Roles=...)]`" with an Architecture.Tests rule.
 
 ### Default admin & refresh tokens
 
-Seed a default admin user from configuration in `SeedExtensions`, and add refresh-token issuance/persistence/revocation (the config has `RefreshTokenExpiryDays` but no refresh flow yet).
+Seed a default admin user from configuration in `SeedExtensions`, and add refresh-token issuance/persistence/revocation (the template ships JWT access tokens only — add the refresh flow when you need it, not before).
 
 ---
 

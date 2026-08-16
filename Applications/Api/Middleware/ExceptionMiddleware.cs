@@ -31,7 +31,7 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
         }
     }
 
-    private static readonly JsonSerializerOptions JsonOptions =
+    private static readonly JsonSerializerOptions _jsonOptions =
         new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private static async Task WriteErrorResponse(HttpContext context, HttpStatusCode status, string message)
@@ -40,7 +40,7 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
         context.Response.StatusCode = (int)status;
 
         var response = ApiResponse.Fail(message, (int)status);
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions)).ConfigureAwait(false);
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, _jsonOptions)).ConfigureAwait(false);
     }
 }
 

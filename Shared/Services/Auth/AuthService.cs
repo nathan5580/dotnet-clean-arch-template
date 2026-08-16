@@ -1,6 +1,7 @@
-using Databases.Core;
-using Databases.Core.Entities;
 using Microsoft.AspNetCore.Identity;
+using Shared.Mapping.Auth;
+using Shared.Resources.Auth;
+using Shared.Resources.HTTP.Auth.GET;
 using Shared.Resources.HTTP.Auth.POST;
 
 namespace Shared.Services.Auth;
@@ -9,12 +10,13 @@ public interface IAuthService
 {
     Task<(ApplicationUser User, string Token)> Register(PostAuthRegisterRequest request, CancellationToken ct);
     Task<(ApplicationUser User, string Token)> Login(PostAuthLoginRequest request, CancellationToken ct);
+    Task<GetMe> GetMe(string userId, CancellationToken ct);
 }
 
 public sealed class AuthService(
-    AppDbContext db,
     UserManager<ApplicationUser> userManager,
     IJwtService jwtService,
+    IAuthMapper authMapper,
     ILogger<AuthService> log) : IAuthService
 {
     public async Task<(ApplicationUser User, string Token)> Register(PostAuthRegisterRequest request, CancellationToken ct)
@@ -67,5 +69,16 @@ public sealed class AuthService(
         var token = jwtService.GenerateToken(user, roles);
 
         return (user, token);
+    }
+
+    public async Task<GetMe> GetMe(string userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId).ConfigureAwait(false);
+        if (user is null)
+            throw new UnauthorizedAccessException("User not found.");
+
+        var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
+
+        return authMapper.ToGetMe(user) with { Roles = roles.ToList() };
     }
 }

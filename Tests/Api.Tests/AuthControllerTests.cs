@@ -14,6 +14,7 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
     public AuthControllerTests(WebAppFactory factory)
     {
         _factory = factory;
+
         _client = factory.CreateClient();
     }
 
@@ -62,11 +63,11 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
         Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
 
-        var body = await response.Content.ReadFromJsonAsync<ApiResponse<GetMe>>();
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<PostAuthResponse>>();
         Assert.NotNull(body);
         Assert.True(body!.Success);
-        Assert.False(string.IsNullOrWhiteSpace(body.Token));
-        Assert.Equal(request.Email, body.Data!.Email);
+        Assert.False(string.IsNullOrWhiteSpace(body.Data!.Token));
+        Assert.Equal(request.Email, body.Data.User.Email);
     }
 
     [Fact]
@@ -84,8 +85,8 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", request);
         registerResponse.EnsureSuccessStatusCode();
 
-        var registerBody = await registerResponse.Content.ReadFromJsonAsync<ApiResponse<GetMe>>();
-        var token = registerBody!.Token!;
+        var registerBody = await registerResponse.Content.ReadFromJsonAsync<ApiResponse<PostAuthResponse>>();
+        var token = registerBody!.Data!.Token!;
 
         using var meRequest = new HttpRequestMessage(HttpMethod.Get, "/api/auth/me");
         meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);

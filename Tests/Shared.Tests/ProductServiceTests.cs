@@ -1,5 +1,4 @@
 using Databases.Core;
-using Microsoft.EntityFrameworkCore;
 using Shared.Mapping.Catalog;
 using Shared.Resources.Enums;
 using Shared.Resources.HTTP.Catalog.POST;

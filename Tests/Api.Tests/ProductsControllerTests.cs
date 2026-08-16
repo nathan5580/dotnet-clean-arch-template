@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Shared.Resources.Enums;
-using Shared.Resources.HTTP.Auth.GET;
 using Shared.Resources.HTTP.Auth.POST;
 using Shared.Resources.HTTP.Catalog.GET;
 using Shared.Resources.HTTP.Catalog.POST;
@@ -18,6 +17,7 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
     public ProductsControllerTests(WebAppFactory factory)
     {
         _factory = factory;
+
         _client = factory.CreateClient();
     }
 
@@ -35,8 +35,8 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         var response = await _client.PostAsJsonAsync("/api/auth/register", request);
         response.EnsureSuccessStatusCode();
 
-        var body = await response.Content.ReadFromJsonAsync<ApiResponse<GetMe>>();
-        return body!.Token!;
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<PostAuthResponse>>();
+        return body!.Data!.Token!;
     }
 
     [Fact]

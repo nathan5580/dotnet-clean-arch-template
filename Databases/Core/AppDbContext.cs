@@ -1,8 +1,5 @@
-using Databases.Core.Entities;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Databases.Core;
 
@@ -16,7 +13,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, Applicatio
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<UserActionAudit> UserActionAudits => Set<UserActionAudit>();
     public DbSet<Product> Products => Set<Product>();
 
     protected override void OnModelCreating(ModelBuilder builder)

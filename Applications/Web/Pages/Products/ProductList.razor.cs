@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Components;
 using Shared.Resources.HTTP.Catalog.GET;
-using Web.Services;
 
 namespace Web.Pages.Products;
 

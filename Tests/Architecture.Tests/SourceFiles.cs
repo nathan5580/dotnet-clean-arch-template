@@ -6,7 +6,7 @@ namespace Architecture.Tests;
 /// </summary>
 public static class SourceFiles
 {
-    private static readonly string[] ExcludedSegments =
+    private static readonly string[] _excludedSegments =
     [
         $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}",
         $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}",
@@ -32,7 +32,7 @@ public static class SourceFiles
 
     public static IReadOnlyList<string> All() =>
         Directory.EnumerateFiles(RepoRoot, "*.cs", SearchOption.AllDirectories)
-            .Where(p => !ExcludedSegments.Any(p.Contains))
+            .Where(p => !_excludedSegments.Any(p.Contains))
             .ToList();
 
     public static IReadOnlyList<string> InProject(string relativeFolder)
@@ -44,6 +44,11 @@ public static class SourceFiles
 
     public static IReadOnlyList<string> EndingWith(string suffix) =>
         All().Where(p => p.EndsWith(suffix, StringComparison.Ordinal)).ToList();
+
+    public static IReadOnlyList<string> RazorFiles() =>
+        Directory.EnumerateFiles(Path.Combine(RepoRoot, "Applications", "Web"), "*.razor", SearchOption.AllDirectories)
+            .Where(p => !_excludedSegments.Any(p.Contains))
+            .ToList();
 
     public static CompilationUnitSyntax Parse(string path) =>
         CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetCompilationUnitRoot();

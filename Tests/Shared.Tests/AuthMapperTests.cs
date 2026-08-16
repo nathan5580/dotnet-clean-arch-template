@@ -20,7 +20,7 @@ public sealed class AuthMapperTests
 
         var result = mapper.ToGetMe(user);
 
-        Assert.Equal(user.Id.ToString(), result.UserId);
+        Assert.Equal(user.Id, result.UserId);
         Assert.Equal(user.Email, result.Email);
         Assert.Equal(user.CreatedAt, result.CreatedAt);
         Assert.True(result.IsActive);

@@ -17,13 +17,12 @@ public record ApiResponse
 public record ApiResponse<T> : ApiResponse
 {
     public T? Data { get; init; }
-    public string? Token { get; init; }
 
-    public static ApiResponse<T> Ok(T data, string? token = null)
-        => new() { Success = true, Data = data, Token = token, StatusCode = 200 };
+    public static ApiResponse<T> Ok(T data)
+        => new() { Success = true, Data = data, StatusCode = 200 };
 
-    public static ApiResponse<T> Created(T data, string? token = null)
-        => new() { Success = true, Data = data, Token = token, StatusCode = 201 };
+    public static ApiResponse<T> Created(T data)
+        => new() { Success = true, Data = data, StatusCode = 201 };
 
     public new static ApiResponse<T> Fail(string error, int statusCode = 400)
         => new() { Success = false, Error = error, StatusCode = statusCode };

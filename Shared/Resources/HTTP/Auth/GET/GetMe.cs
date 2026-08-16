@@ -8,9 +8,3 @@ public record GetMe
     public DateTime CreatedAt { get; init; }
     public bool IsActive { get; init; }
 }
-
-public record GetUserRole
-{
-    public required string RoleId { get; init; }
-    public required string Name { get; init; }
-}

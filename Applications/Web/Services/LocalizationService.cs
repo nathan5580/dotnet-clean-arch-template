@@ -1,9 +1,8 @@
 using System.Text.Json;
-using Microsoft.JSInterop;
 
 namespace Web.Services;
 
-public sealed class LocalizationService
+public sealed class LocalizationService(HttpClient http)
 {
     private readonly Dictionary<string, string> _keys = [];
     private string _currentLang = "en";
@@ -14,8 +13,8 @@ public sealed class LocalizationService
     public async Task InitializeAsync(string lang = "en")
     {
         _currentLang = lang;
-        await LoadNamespace("common");
 
+        await LoadNamespace("common");
         _fallbackDict = new Dictionary<string, string>(_keys);
     }
 
@@ -23,7 +22,6 @@ public sealed class LocalizationService
     {
         try
         {
-            using var http = new HttpClient();
             var response = await http.GetStringAsync($"locales/{_currentLang}/{ns}.json");
             var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(response);
             if (dict is not null)

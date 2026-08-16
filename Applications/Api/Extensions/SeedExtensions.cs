@@ -1,7 +1,4 @@
-using Databases.Core;
-using Databases.Core.Entities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Api.Extensions;
 
@@ -30,6 +27,9 @@ public static class SeedExtensions
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger(nameof(SeedExtensions));
             logger.LogWarning(ex, "Database seeding skipped — DB may not be ready yet.");
+
+            if (app.Environment.IsProduction())
+                throw;
         }
     }
 

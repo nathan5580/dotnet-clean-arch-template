@@ -18,23 +18,10 @@ jobs:
 
     steps:
       - name: Check PR title format
-        uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
         with:
-          types: |
-            feat
-            fix
-            deps
-            refactor
-            perf
-            test
-            docs
-            chore
-            ci
-            style
-          requireScope: false
-          subjectPattern: ^(?![A-Z]).+$
-          subjectPatternError: |
-            The subject "{subject}" must start with a lowercase letter.
-          validateSingleCommit: true
+          script: |
+            const title = context.payload.pull_request.title;
+            if (!/^[\w.]+ - .+$/.test(title)) {
+              core.setFailed(`PR title "${title}" must match the commit format "Project - What was done" (e.g. "Api - Add Widget endpoints").`);
+            }

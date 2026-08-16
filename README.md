@@ -23,7 +23,7 @@
 ```
 {{ProjectName}}/
 ├── Applications/
-│   ├── Api/                          # ASP.NET Core 10 — controllers, middleware, SignalR, Quartz
+│   ├── Api/                          # ASP.NET Core 10 — controllers, middleware, Quartz
 │   └── Web/                          # Blazor WASM 10 — Tailwind v4, i18n, co-hosted
 ├── Databases/
 │   ├── Core/                         # AppDbContext, starter entities, PK pattern, enums
@@ -40,7 +40,7 @@
     └── Web.Tests/                    # Blazor infrastructure tests (stub)
 ```
 
-**The API co-hosts everything** — REST endpoints, Blazor WASM static files, OpenAPI/Scalar docs, SignalR hubs, and Quartz jobs. One deployable. The Web project runs standalone for UI dev with hot reload.
+**The API co-hosts everything** — REST endpoints, Blazor WASM static files, OpenAPI/Scalar docs, and Quartz jobs. One deployable. The Web project runs standalone for UI dev with hot reload.
 
 **Bounded contexts** cut through every layer vertically — change a feature and the controller, service, models, validation, mapping, and DB config all live under the same context directory.
 
@@ -51,7 +51,7 @@
 ### Build & infrastructure
 - `.slnx` solution (modern XML format) — 13 projects organized in 4 folders
 - `Directory.Build.props` — net10.0, Nullable, TreatWarningsAsErrors
-- `Directory.Packages.props` — **central package management**, 40+ NuGet packages pinned
+- `Directory.Packages.props` — **central package management**, 34 NuGet packages pinned
 - `.editorconfig` — naming rules (`_underscore` fields, `I` prefix interfaces), var preferences, code styles
 - `coverlet.runsettings` — Cobertura/JSON/OpenCover output, module exclusions
 - `nuget.config` — single source (`nuget.org`)
@@ -59,7 +59,7 @@
 
 ### CI/CD (GitHub Actions)
 - `ci.yml` — restore → format check → build → 3 test projects → coverage → Codecov
-- `pr-title-lint.yml` — conventional commit enforcement (`feat`, `fix`, `deps`, …)
+- `pr-title-lint.yml` — enforces the `Project - What was done` PR title format
 - `dependabot.yml` — grouped updates: NuGet (5 groups), GitHub Actions, npm (Tailwind group)
 - `labeler.yml` — auto-label PRs by changed path (api, frontend, tests, security, ci, dependencies)
 - **PR template** — bounded context, validation checklist, UI evidence, deployment notes
@@ -82,8 +82,8 @@
 | Mapper | `IAuthMapper` → `[Mapper] sealed partial AuthMapper` | Mapperly source generator — no runtime dependency |
 | Middleware | `ExceptionMiddleware.cs` | KeyNotFound→404, InvalidOp→400, Unauthorized→401 |
 | DB config | `UserConfiguration` | Per-context assembly, constraint naming, HasConversion\<string\> |
-| Entity | `UserActionAudit` | `AuditId` + `[NotMapped] Id` alias pattern |
-| GlobalUsings | Per-project files | Entity type aliases, no `System.*` duplicates |
+| Entity | `Product` | `ProductId` + `[NotMapped] Id` alias; Identity entities keep the base string `Id` |
+| GlobalUsings | Per-project files | Framework-only imports — no context-specific usings |
 
 ### Frontend skeleton — Blazor WASM + Tailwind v4
 
@@ -95,7 +95,6 @@
 | `RedirectToLogin` | Standard unauthorized redirect |
 | `ApiClient` | Typed `IApiClient` with `ApiResponse<T>` unwrapping |
 | `ToastService` | Success/Error notifications via event delegates |
-| `ThemeService` | Brand color application |
 | `LocalizationService` | Runtime JSON loading, `T(key, args)`, English fallback |
 | `MainLayout` | CascadingAuthenticationState + @Body |
 
@@ -109,7 +108,16 @@ Controllers_Concrete_AreNotSealed             // controllers + entities never se
 HttpModels_All_AreRecords                     // every HTTP type is a record; no Dto suffix
 Controllers_Contain_NoTryCatch                // zero try/catch in controllers
 LibraryAwaits_Use_ConfigureAwaitFalse         // ConfigureAwait(false) across Shared.*/Databases.*
-MethodBodies_Separate_LogicalStages           // blank line between logical stages; none at the braces
+MethodLikeBodies_Separate_LogicalStages    // blank lines between logical stages; none at the braces
+Controllers_Actions_HaveProducesResponseType  // every action documents its responses
+PublicSymbols_All_AreReferenced               // no dead public types/constants
+RazorFiles_Contain_NoInject                   // components/pages inject via code-behind [Inject]
+RazorFiles_Contain_NoCodeBlock               // no @code blocks — logic lives in .razor.cs
+RazorPages_All_HaveCodeBehind                 // every page has a .razor.cs partial class
+WebCode_Contain_NoNewHttpClient               // one HttpClient, registered in Program.cs
+Solution_Contain_NoDateTimeNow                // DateTime.UtcNow only
+LogCalls_All_UseStructuredPlaceholders        // log placeholders, never interpolated strings
+GlobalUsings_Contain_NoSystemUsings           // System usings stay in the using file
 AllFiles_Use_FileScopedNamespaces             // file-scoped namespaces only
 TestMethods_All_FollowSubjectScenarioExpected // Method_Scenario_Expected naming
 ```
@@ -185,8 +193,8 @@ Every step follows the same verb-first naming, same file-scoped namespace, same 
 | `CancellationToken ct` last | Async pipeline cancellation from client through to database. One parameter name. Always last. |
 | `ApiResponse<T>` envelope | One consistent response shape. Frontend unwraps the same way everywhere. |
 | Singular table names | Consistency with EF Core conventions. `User` reads better than `Users` in every query. |
-| PK = `UserId` alias `Id` | Explicit naming in queries (`x.UserId`), clean `x.Id` in generic code. Both worlds. |
-| `GlobalUsings` per project | No shared global state. Entity aliases (`UserEntity`) prevent namespace collisions between context assemblies. |
+| PK pattern | Domain entities: `WidgetId` + `Id` alias. Identity entities: base string `Id` — no Guid facade, Identity is string-keyed. |
+| `GlobalUsings` per project | No shared global state. Framework-only imports; context usings stay explicit per file. |
 | Convention tests in CI | Code review catches intent. Automation catches drift. Both are necessary. |
 
 ---
