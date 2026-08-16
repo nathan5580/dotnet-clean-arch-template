@@ -49,7 +49,7 @@ C#:
 - `TreatWarningsAsErrors=true`.
 - HTTP models are `record`, not `class`.
 - Throw from services; `ExceptionMiddleware` maps to HTTP.
-- Method bodies aerated: blank line after opening `{` and before closing `}` (methods only).
+- Method bodies aerated: blank line between logical stages, none at the braces (methods only).
 - Conventions enforced by `Tests/Architecture.Tests` (NetArchTest + Roslyn) — keep it green.
 
 Blazor:

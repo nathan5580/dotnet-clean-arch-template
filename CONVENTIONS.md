@@ -19,14 +19,14 @@ One-page quick reference. Full rationale + the vertical-slice recipe live in [`A
 
 ## Method-body aeration
 
-Blank line right after a method's opening `{` and right before its closing `}` — **methods only** (not types or `if`/`for`/`try`). `dotnet format` won't add these; write them by hand.
+Blank line **between logical stages** — validate, load, apply, persist, map, return. **No** blank line right after the opening `{` or right before the closing `}` — **methods only** (not types or `if`/`for`/`try`). `dotnet format` won't add these; write them by hand.
 
 ```csharp
 public GetMe ToGetMe(ApplicationUser user)
 {
+    var roles = LoadRoles(user);
 
-    return Map(user);
-
+    return Map(user, roles);
 }
 ```
 

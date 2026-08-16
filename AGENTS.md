@@ -17,7 +17,7 @@
 - No `Async` suffix on method names. No `Dto` suffix on types. No `try/catch` in controllers (throw; `ExceptionMiddleware` maps it).
 - HTTP models are `record`, organized `HTTP/{Context}/{Verb}/`.
 - `ConfigureAwait(false)` on every `await` in library projects (`Shared.*`, `Databases.*`). `CancellationToken ct` is the last parameter.
-- **Method-body aeration:** one blank line right after a method's opening `{` and one right before its closing `}` (methods only — not types or control-flow blocks). `dotnet format` will NOT add these; write them by hand.
+- **Method-body aeration:** blank line between logical stages (validate → load → apply → persist → map/return), **no** blank line right after a method's opening `{` or right before its closing `}` (methods only — not types or control-flow blocks). `dotnet format` will NOT add these; write them by hand.
 - `TreatWarningsAsErrors=true` — the build is zero-warning.
 
 **Commands:**
@@ -110,19 +110,18 @@ All code is organized by business context across every layer:
 
 ### Method-Body Aeration
 
-Every method with a block body gets one blank line immediately after the opening `{` and one immediately before the closing `}`. Type bodies and control-flow blocks (`if`/`for`/`try`) stay compact.
+Every method reads as a sequence of small, visible stages: validate or normalize, load state, apply the change, persist or call the boundary, then map and return. Leave a blank line between those stages when a method has more than one; never put a blank line right after the opening `{` or right before the closing `}`. Type bodies and control-flow blocks (`if`/`for`/`try`) stay compact.
 
 ```csharp
 public GetMe ToGetMe(ApplicationUser user)
 {
-
     var roles = LoadRoles(user);
-    return Map(user, roles);
 
+    return Map(user, roles);
 }
 ```
 
-Enforced by `Tests/Architecture.Tests` (Roslyn). `dotnet format` does not add these blank lines — write them by hand.
+Enforced by `Tests/Architecture.Tests` (Roslyn): multi-statement method bodies must separate at least one stage with a blank line, and no method body may carry a blank line at its braces. `dotnet format` does not add these blank lines — write them by hand.
 
 ### `sealed` Convention
 
@@ -224,7 +223,7 @@ dotnet test "{{ProjectName}}.slnx"       # all suites
 `Tests/Architecture.Tests` makes conventions executable — CI fails on violation. **When you add a convention, add a rule here.**
 
 - **Structural (NetArchTest):** services/mappers/jobs/validators/handlers sealed; controllers + entities not sealed; HTTP models are records; no `Dto` suffix; `ct` named/last; enum properties use `.HasConversion<string>()`; layering (`Databases.*`/`Shared.*` never depend on `Api`).
-- **Source (Roslyn):** no try/catch in controllers; no `async void`; `ConfigureAwait(false)` on every library await; file-scoped namespaces; method-body aeration.
+- **Source (Roslyn):** no try/catch in controllers; no `async void`; `ConfigureAwait(false)` on every library await; file-scoped namespaces; stage-separated method bodies (`MethodBodies_Separate_LogicalStages`).
 - **Naming:** test methods match `Subject_Scenario_Expected`.
 
 ## Test Conventions

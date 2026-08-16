@@ -25,7 +25,7 @@ Project conventions
 - Keep code simple and readable; avoid unnecessary abstractions
 - sealed services/jobs/mappers; never sealed controllers or entities
 - Mapping via Mapperly (source generator): `[Mapper] public sealed partial class AuthMapper`, registered as `services.AddScoped<IAuthMapper, AuthMapper>()`
-- Method bodies aerated: one blank line after the opening `{` and one before the closing `}` (methods only; type bodies and control-flow blocks stay compact)
+- Method bodies aerated: blank line between logical stages, none at the braces (methods only; type bodies and control-flow blocks stay compact)
 - Conventions enforced by Tests/Architecture.Tests (NetArchTest + Roslyn) — CI fails on violations; keep it green
 
 Validation commands

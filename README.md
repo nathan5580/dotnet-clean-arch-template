@@ -109,7 +109,7 @@ Controllers_Concrete_AreNotSealed             // controllers + entities never se
 HttpModels_All_AreRecords                     // every HTTP type is a record; no Dto suffix
 Controllers_Contain_NoTryCatch                // zero try/catch in controllers
 LibraryAwaits_Use_ConfigureAwaitFalse         // ConfigureAwait(false) across Shared.*/Databases.*
-MethodBodies_All_AreAerated                   // blank line after { and before } in methods
+MethodBodies_Separate_LogicalStages           // blank line between logical stages; none at the braces
 AllFiles_Use_FileScopedNamespaces             // file-scoped namespaces only
 TestMethods_All_FollowSubjectScenarioExpected // Method_Scenario_Expected naming
 ```
