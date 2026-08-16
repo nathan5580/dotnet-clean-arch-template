@@ -19,7 +19,6 @@ public sealed class AuthService(
 {
     public async Task<(ApplicationUser User, string Token)> Register(PostAuthRegisterRequest request, CancellationToken ct)
     {
-
         var existingUser = await userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
         if (existingUser is not null)
             throw new InvalidOperationException("Email is already registered.");
@@ -46,12 +45,10 @@ public sealed class AuthService(
         var token = jwtService.GenerateToken(user, roles);
 
         return (user, token);
-
     }
 
     public async Task<(ApplicationUser User, string Token)> Login(PostAuthLoginRequest request, CancellationToken ct)
     {
-
         var user = await userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
         if (user is null)
             throw new UnauthorizedAccessException("Invalid credentials.");
@@ -70,6 +67,5 @@ public sealed class AuthService(
         var token = jwtService.GenerateToken(user, roles);
 
         return (user, token);
-
     }
 }

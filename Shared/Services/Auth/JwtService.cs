@@ -15,7 +15,6 @@ public sealed class JwtService(IConfiguration configuration) : IJwtService
 {
     public string GenerateToken(ApplicationUser user, IList<string> roles)
     {
-
         var key = configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key is not configured.");
         var issuer = configuration["Jwt:Issuer"];
@@ -44,6 +43,5 @@ public sealed class JwtService(IConfiguration configuration) : IJwtService
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-
     }
 }

@@ -16,15 +16,13 @@ public partial class ProductList : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-
         await Localization.LoadNamespace("products");
-        await Load();
 
+        await Load();
     }
 
     private async Task Load()
     {
-
         _loading = true;
         _error = null;
 
@@ -41,7 +39,6 @@ public partial class ProductList : ComponentBase
         {
             _loading = false;
         }
-
     }
 
     private void GoToCreate() => Navigation.NavigateTo("/products/new");

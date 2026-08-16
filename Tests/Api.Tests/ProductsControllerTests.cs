@@ -23,7 +23,6 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
 
     private async Task<string> RegisterAndGetToken()
     {
-
         await _factory.SeedRoles();
 
         var request = new PostAuthRegisterRequest
@@ -38,22 +37,19 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
 
         var body = await response.Content.ReadFromJsonAsync<ApiResponse<GetMe>>();
         return body!.Token!;
-
     }
 
     [Fact]
     public async Task GetProducts_WithoutToken_Returns401()
     {
-
         var response = await _client.GetAsync("/api/products");
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task PostProduct_WithValidTokenAndRequest_Returns201()
     {
-
         var token = await RegisterAndGetToken();
 
         var request = new PostProductRequest
@@ -78,13 +74,11 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         Assert.True(body!.Success);
         Assert.Equal("Integration Widget", body.Data!.Name);
         Assert.Equal(ProductCategory.Electronics, body.Data.Category);
-
     }
 
     [Fact]
     public async Task GetProducts_WithValidToken_Returns200()
     {
-
         var token = await RegisterAndGetToken();
 
         var createRequest = new PostProductRequest
@@ -112,6 +106,5 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         Assert.NotNull(body);
         Assert.True(body!.Success);
         Assert.Contains(body.Data!, p => p.Name == createRequest.Name);
-
     }
 }

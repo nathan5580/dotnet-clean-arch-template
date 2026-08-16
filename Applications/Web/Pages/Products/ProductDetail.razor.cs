@@ -18,15 +18,13 @@ public partial class ProductDetail : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-
         await Localization.LoadNamespace("products");
-        await Load();
 
+        await Load();
     }
 
     private async Task Load()
     {
-
         _loading = true;
         _error = null;
 
@@ -45,7 +43,6 @@ public partial class ProductDetail : ComponentBase
         {
             _loading = false;
         }
-
     }
 
     private void GoBack() => Navigation.NavigateTo("/products");

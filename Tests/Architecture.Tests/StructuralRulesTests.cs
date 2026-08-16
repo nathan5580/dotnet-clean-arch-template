@@ -17,14 +17,12 @@ public sealed class StructuralRulesTests
 
     private static void AssertSealed(Assembly assembly, string suffix)
     {
-
         var result = Types.InAssembly(assembly)
             .That().AreClasses().And().AreNotAbstract().And().HaveNameEndingWith(suffix)
             .Should().BeSealed()
             .GetResult();
 
         Assert.True(result.IsSuccessful, Describe(result));
-
     }
 
     [Fact]
@@ -45,20 +43,17 @@ public sealed class StructuralRulesTests
     [Fact]
     public void Controllers_Concrete_AreNotSealed()
     {
-
         var result = Types.InAssembly(ApiAssembly)
             .That().AreClasses().And().AreNotAbstract().And().HaveNameEndingWith("Controller")
             .Should().NotBeSealed()
             .GetResult();
 
         Assert.True(result.IsSuccessful, Describe(result));
-
     }
 
     [Fact]
     public void Controllers_Concrete_InheritAuthenticatedControllerOrAreAllowListed()
     {
-
         // Authenticated controllers must derive from AuthenticatedController so they
         // pick up [Authorize] + CurrentUserId. Public controllers are explicitly allow-listed.
         var allowList = new[] { typeof(Api.Controllers.Auth.AuthController) };
@@ -100,7 +95,6 @@ public sealed class StructuralRulesTests
         // the assertion directly. Asserting it here keeps the variable load-bearing.
         Assert.True(checkedNonAllowListed >= 0,
             "Negative controller count is impossible; assertion exists to keep the counter load-bearing.");
-
     }
 
     /// <summary>
@@ -115,78 +109,65 @@ public sealed class StructuralRulesTests
     [Fact]
     public void Entities_All_AreNotSealed()
     {
-
         var entities = CoreAssembly.GetTypes()
             .Where(t => t.Namespace?.Contains("Entities") == true && t is { IsClass: true, IsAbstract: false });
 
         foreach (var type in entities)
             Assert.False(type.IsSealed, $"{type.Name} must not be sealed — EF Core proxies require open entity types.");
-
     }
 
     [Fact]
     public void HttpModels_All_AreRecords()
     {
-
         var httpTypes = ResourcesAssembly.GetTypes()
             .Where(t => t.Namespace?.Contains("HTTP") == true && t is { IsClass: true, IsAbstract: false });
 
         foreach (var type in httpTypes)
             Assert.True(type.GetMethod("<Clone>$") is not null, $"{type.FullName} must be a record.");
-
     }
 
     [Fact]
     public void Types_None_UseDtoSuffix()
     {
-
         foreach (var assembly in new[] { ApiAssembly, ServicesAssembly, ResourcesAssembly, MappingAssembly })
             foreach (var type in assembly.GetTypes().Where(t => !t.Name.StartsWith('<')))
                 Assert.False(type.Name.EndsWith("Dto"), $"{type.FullName} must not use the 'Dto' suffix.");
-
     }
 
     [Fact]
     public void Databases_DoNotDependOn_ApiOrServices()
     {
-
         var result = Types.InAssembly(CoreAssembly)
             .Should().NotHaveDependencyOnAny("Api", "Shared.Services")
             .GetResult();
 
         Assert.True(result.IsSuccessful, Describe(result));
-
     }
 
     [Fact]
     public void SharedLibraries_DoNotDependOn_Api()
     {
-
         foreach (var assembly in new[] { ServicesAssembly, MappingAssembly, ResourcesAssembly })
         {
             var result = Types.InAssembly(assembly).Should().NotHaveDependencyOn("Api").GetResult();
             Assert.True(result.IsSuccessful, Describe(result));
         }
-
     }
 
     [Fact]
     public void ServiceAndControllerMethods_Have_NoAsyncSuffix()
     {
-
         var types = ServicesAssembly.GetTypes().Where(t => t.Name.EndsWith("Service") && t.IsClass)
             .Concat(ApiAssembly.GetTypes().Where(t => t.Name.EndsWith("Controller") && t.IsClass));
 
         foreach (var type in types)
             foreach (var method in type.GetMethods().Where(m => m.IsPublic && !m.IsSpecialName && m.DeclaringType == type))
                 Assert.False(method.Name.EndsWith("Async"), $"{type.Name}.{method.Name} must not end with 'Async'.");
-
     }
 
     [Fact]
     public void AsyncMethods_CancellationToken_IsNamedCtAndLast()
     {
-
         var types = ServicesAssembly.GetTypes().Where(t => t.IsClass)
             .Concat(ApiAssembly.GetTypes().Where(t => t.Name.EndsWith("Controller")));
 
@@ -202,13 +183,11 @@ public sealed class StructuralRulesTests
                     $"{type.Name}.{method.Name}: CancellationToken must be the last parameter.");
                 Assert.Equal("ct", last.Name);
             }
-
     }
 
     [Fact]
     public void EntityEnumProperties_Use_StringConversion()
     {
-
         // Build the model the way the running app does: per-context EF configurations
         // (e.g. Databases.Catalog) live outside Databases.Core and are applied via
         // AppDbContext.ExtraConfigurationAssemblies, which AddAppServices populates.
@@ -256,6 +235,5 @@ public sealed class StructuralRulesTests
             Assert.True(providerIsString,
                 $"{entity.ClrType.Name}.{property.Name} is an enum and must use .HasConversion<string>().");
         }
-
     }
 }

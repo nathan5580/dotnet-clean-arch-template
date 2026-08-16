@@ -24,11 +24,10 @@ public class AuthController(IAuthService authService, IAuthMapper authMapper, Us
         [FromBody] PostAuthRegisterRequest request,
         CancellationToken ct)
     {
-
         var (user, token) = await authService.Register(request, ct);
+
         var me = authMapper.ToGetMe(user);
         return CreatedAtAction(nameof(GetMe), ApiResponse<GetMe>.Created(me, token));
-
     }
 
     [HttpPost("login")]
@@ -38,12 +37,11 @@ public class AuthController(IAuthService authService, IAuthMapper authMapper, Us
         [FromBody] PostAuthLoginRequest request,
         CancellationToken ct)
     {
-
         var (user, token) = await authService.Login(request, ct);
         var roles = await userManager.GetRolesAsync(user);
+
         var me = authMapper.ToGetMe(user) with { Roles = roles.ToList() };
         return Ok(ApiResponse<GetMe>.Ok(me, token));
-
     }
 
     [HttpGet("me")]
@@ -52,7 +50,6 @@ public class AuthController(IAuthService authService, IAuthMapper authMapper, Us
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<GetMe>>> GetMe(CancellationToken ct)
     {
-
         var user = await userManager.GetUserAsync(User);
         if (user is null)
             throw new UnauthorizedAccessException("User not found.");
@@ -60,6 +57,5 @@ public class AuthController(IAuthService authService, IAuthMapper authMapper, Us
         var roles = await userManager.GetRolesAsync(user);
         var me = authMapper.ToGetMe(user) with { Roles = roles.ToList() };
         return Ok(ApiResponse<GetMe>.Ok(me));
-
     }
 }

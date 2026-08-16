@@ -20,10 +20,9 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<List<GetProduct>>>> GetProducts(CancellationToken ct)
     {
-
         var products = await service.GetProducts(ct);
-        return Ok(ApiResponse<List<GetProduct>>.Ok(products));
 
+        return Ok(ApiResponse<List<GetProduct>>.Ok(products));
     }
 
     [HttpGet("{id:guid}")]
@@ -32,10 +31,9 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<GetProduct>>> GetProduct([FromRoute] Guid id, CancellationToken ct)
     {
-
         var product = await service.GetProduct(id, ct);
-        return Ok(ApiResponse<GetProduct>.Ok(product));
 
+        return Ok(ApiResponse<GetProduct>.Ok(product));
     }
 
     [HttpPost]
@@ -44,10 +42,9 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<GetProduct>>> PostProduct([FromBody] PostProductRequest request, CancellationToken ct)
     {
-
         var product = await service.PostProduct(request, ct);
-        return CreatedAtAction(nameof(GetProduct), new { id = product.ProductId }, ApiResponse<GetProduct>.Created(product));
 
+        return CreatedAtAction(nameof(GetProduct), new { id = product.ProductId }, ApiResponse<GetProduct>.Created(product));
     }
 
     [HttpPut("{id:guid}")]
@@ -57,10 +54,9 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<GetProduct>>> PutProduct([FromRoute] Guid id, [FromBody] PutProductRequest request, CancellationToken ct)
     {
-
         var product = await service.PutProduct(id, request, ct);
-        return Ok(ApiResponse<GetProduct>.Ok(product));
 
+        return Ok(ApiResponse<GetProduct>.Ok(product));
     }
 
     [HttpDelete("{id:guid}")]
@@ -69,9 +65,8 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse>> DeleteProduct([FromRoute] Guid id, CancellationToken ct)
     {
-
         await service.DeleteProduct(id, ct);
-        return Ok(ApiResponse.Ok("Product deleted."));
 
+        return Ok(ApiResponse.Ok("Product deleted."));
     }
 }

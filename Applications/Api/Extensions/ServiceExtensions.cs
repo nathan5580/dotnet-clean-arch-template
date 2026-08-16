@@ -78,12 +78,10 @@ public static class ServiceExtensions
         services.AddControllers()
             .AddJsonOptions(o =>
                 o.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
-
     }
 
     public static void UseAppMiddleware(this WebApplication app, IWebHostEnvironment environment)
     {
-
         if (environment.IsDevelopment())
         {
             app.UseWebAssemblyDebugging();
@@ -116,6 +114,5 @@ public static class ServiceExtensions
 
         // SPA fallback
         app.MapFallbackToFile("index.html");
-
     }
 }

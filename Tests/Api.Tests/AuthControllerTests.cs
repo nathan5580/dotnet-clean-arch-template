@@ -20,28 +20,24 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
     [Fact]
     public async Task GetHealth_WhenCalled_Returns200()
     {
-
         var response = await _client.GetAsync("/api/health");
         response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadAsStringAsync();
         Assert.Contains("Healthy", content);
-
     }
 
     [Fact]
     public async Task GetAuthMe_WithoutToken_Returns401()
     {
-
         var response = await _client.GetAsync("/api/auth/me");
-        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
 
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
     public async Task PostRegister_WithInvalidRequest_Returns400()
     {
-
         var content = new StringContent(
             "{}",
             System.Text.Encoding.UTF8,
@@ -49,13 +45,11 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
 
         var response = await _client.PostAsync("/api/auth/register", content);
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
-
     }
 
     [Fact]
     public async Task PostRegister_WithValidRequest_ReturnsToken()
     {
-
         await _factory.SeedRoles();
 
         var request = new PostAuthRegisterRequest
@@ -73,13 +67,11 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
         Assert.True(body!.Success);
         Assert.False(string.IsNullOrWhiteSpace(body.Token));
         Assert.Equal(request.Email, body.Data!.Email);
-
     }
 
     [Fact]
     public async Task GetAuthMe_WithValidToken_Returns200()
     {
-
         await _factory.SeedRoles();
 
         var request = new PostAuthRegisterRequest
@@ -104,6 +96,5 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
         var meBody = await meResponse.Content.ReadFromJsonAsync<ApiResponse<GetMe>>();
         Assert.NotNull(meBody);
         Assert.Equal(request.Email, meBody!.Data!.Email);
-
     }
 }

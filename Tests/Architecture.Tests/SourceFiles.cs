@@ -17,7 +17,6 @@ public static class SourceFiles
 
     private static string FindRepoRoot()
     {
-
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
 
         while (dir is not null)
@@ -29,7 +28,6 @@ public static class SourceFiles
         }
 
         throw new InvalidOperationException("Could not locate repo root (no .slnx found walking up from test bin).");
-
     }
 
     public static IReadOnlyList<string> All() =>
@@ -39,10 +37,9 @@ public static class SourceFiles
 
     public static IReadOnlyList<string> InProject(string relativeFolder)
     {
-
         var needle = $"{Path.DirectorySeparatorChar}{relativeFolder}{Path.DirectorySeparatorChar}";
-        return All().Where(p => p.Contains(needle)).ToList();
 
+        return All().Where(p => p.Contains(needle)).ToList();
     }
 
     public static IReadOnlyList<string> EndingWith(string suffix) =>

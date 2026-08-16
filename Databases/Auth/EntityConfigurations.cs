@@ -8,12 +8,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<ApplicationUser
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
-
         builder.ToTable("User", "Auth");
 
         builder.Property(u => u.CreatedAt).IsRequired();
         builder.Property(u => u.IsActive).HasDefaultValue(true);
-
     }
 }
 
@@ -21,7 +19,6 @@ public sealed class UserActionAuditConfiguration : IEntityTypeConfiguration<User
 {
     public void Configure(EntityTypeBuilder<UserActionAudit> builder)
     {
-
         builder.ToTable("UserActionAudit", "Auth");
 
         builder.HasKey(e => e.AuditId)
@@ -41,6 +38,5 @@ public sealed class UserActionAuditConfiguration : IEntityTypeConfiguration<User
 
         builder.HasIndex(e => e.Timestamp)
             .HasDatabaseName("IX-Auth_UserActionAudit_Timestamp");
-
     }
 }

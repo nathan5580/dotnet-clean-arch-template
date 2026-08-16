@@ -7,7 +7,6 @@ public sealed class NamingTests
     [Fact]
     public void TestMethods_All_FollowSubjectScenarioExpected()
     {
-
         var testAssemblies = new[]
         {
             typeof(NamingTests).Assembly,
@@ -25,6 +24,5 @@ public sealed class NamingTests
             foreach (var method in methods)
                 Assert.Matches(@"^[A-Z]\w+_[A-Z]\w+_[A-Z]\w+$", method.Name);
         }
-
     }
 }

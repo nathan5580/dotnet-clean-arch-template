@@ -8,7 +8,6 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
     public void Configure(EntityTypeBuilder<Product> builder)
     {
-
         builder.ToTable("Product", "Catalog");
 
         builder.HasKey(e => e.ProductId)
@@ -27,6 +26,5 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.HasIndex(e => e.Category)
             .HasDatabaseName("IX-Catalog_Product_Category");
-
     }
 }

@@ -31,10 +31,8 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-
         builder.ConfigureAppConfiguration((_, config) =>
         {
-
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Jwt:Key"] = "test-secret-key-that-is-at-least-32-bytes-long!!",
@@ -47,7 +45,6 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
 
         builder.ConfigureServices(services =>
         {
-
             // Remove EF relational descriptors so InMemory provider can be used
             var efDescriptors = services
                 .Where(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>)
@@ -77,7 +74,6 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
 
             services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
             {
-
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -93,14 +89,12 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
             });
 
         });
-
     }
 
     // The InMemory provider can't run migrations, so the startup seeder is skipped in tests.
     // Seed the application roles directly so registration (AddToRoleAsync) succeeds.
     public async Task SeedRoles()
     {
-
         using var scope = Services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
@@ -109,6 +103,5 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new ApplicationRole { Name = role });
         }
-
     }
 }

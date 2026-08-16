@@ -6,7 +6,6 @@ public static class QuartzExtensions
 {
     public static IServiceCollection AddAppQuartzJobs(this IServiceCollection services, IConfiguration configuration)
     {
-
         services.AddQuartz(q =>
         {
             // Register your jobs here
@@ -23,6 +22,5 @@ public static class QuartzExtensions
         });
 
         return services;
-
     }
 }

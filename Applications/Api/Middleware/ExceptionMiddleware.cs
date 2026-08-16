@@ -8,7 +8,6 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
 {
     public async Task InvokeAsync(HttpContext context)
     {
-
         try
         {
             await next(context).ConfigureAwait(false);
@@ -30,7 +29,6 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
             logger.LogError(ex, "Unhandled exception");
             await WriteErrorResponse(context, HttpStatusCode.InternalServerError, "An unexpected error occurred.").ConfigureAwait(false);
         }
-
     }
 
     private static readonly JsonSerializerOptions JsonOptions =
@@ -38,13 +36,11 @@ public sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionM
 
     private static async Task WriteErrorResponse(HttpContext context, HttpStatusCode status, string message)
     {
-
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)status;
 
         var response = ApiResponse.Fail(message, (int)status);
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions)).ConfigureAwait(false);
-
     }
 }
 

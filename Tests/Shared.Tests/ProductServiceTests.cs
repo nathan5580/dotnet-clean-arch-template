@@ -11,12 +11,11 @@ public sealed class ProductServiceTests
 {
     private static AppDbContext CreateDbContext()
     {
-
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
             .Options;
-        return new AppDbContext(options);
 
+        return new AppDbContext(options);
     }
 
     private static ProductService CreateService(AppDbContext db) =>
@@ -25,7 +24,6 @@ public sealed class ProductServiceTests
     [Fact]
     public async Task PostProduct_WithValidRequest_PersistsAndReturnsProduct()
     {
-
         var db = CreateDbContext();
         var service = CreateService(db);
 
@@ -44,13 +42,11 @@ public sealed class ProductServiceTests
         Assert.Equal(ProductCategory.Electronics, created.Category);
         Assert.True(created.IsActive);
         Assert.Equal(1, await db.Products.CountAsync());
-
     }
 
     [Fact]
     public async Task GetProduct_WithExistingId_ReturnsProduct()
     {
-
         var db = CreateDbContext();
         var service = CreateService(db);
 
@@ -63,18 +59,15 @@ public sealed class ProductServiceTests
         Assert.Equal(created.ProductId, fetched.ProductId);
         Assert.Equal("Shirt", fetched.Name);
         Assert.Equal(ProductCategory.Apparel, fetched.Category);
-
     }
 
     [Fact]
     public async Task GetProduct_WithMissingId_ThrowsKeyNotFoundException()
     {
-
         var db = CreateDbContext();
         var service = CreateService(db);
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
             () => service.GetProduct(Guid.NewGuid(), CancellationToken.None));
-
     }
 }

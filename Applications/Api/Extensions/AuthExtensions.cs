@@ -8,7 +8,6 @@ public static class AuthExtensions
 {
     public static void AddAppAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-
         var jwtKey = configuration["Jwt:Key"];
         if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
             throw new InvalidOperationException(
@@ -35,17 +34,14 @@ public static class AuthExtensions
                 ClockSkew = TimeSpan.Zero
             };
         });
-
     }
 
     public static void AddAppAuthorization(this IServiceCollection services)
     {
-
         services.AddAuthorization(options =>
         {
             options.AddPolicy(AppPermissions.UsersRead, policy =>
                 policy.RequireClaim("permission", AppPermissions.UsersRead));
         });
-
     }
 }

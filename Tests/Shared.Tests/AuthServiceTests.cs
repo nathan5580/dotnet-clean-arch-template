@@ -14,27 +14,24 @@ public sealed class AuthServiceTests
 {
     private static AppDbContext CreateDbContext()
     {
-
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
             .Options;
-        return new AppDbContext(options);
 
+        return new AppDbContext(options);
     }
 
     private static Mock<UserManager<ApplicationUser>> CreateUserManagerMock()
     {
-
         var store = new Mock<IUserStore<ApplicationUser>>();
+
         return new Mock<UserManager<ApplicationUser>>(
             store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
-
     }
 
     [Fact]
     public async Task Register_WithValidRequest_ReturnsToken()
     {
-
         var db = CreateDbContext();
         var userManager = CreateUserManagerMock();
         var jwt = new Mock<IJwtService>();
@@ -64,13 +61,11 @@ public sealed class AuthServiceTests
         Assert.Equal("generated-token", token);
         userManager.Verify(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), AppRoles.User), Times.Once);
         jwt.Verify(j => j.GenerateToken(It.IsAny<ApplicationUser>(), It.IsAny<IList<string>>()), Times.Once);
-
     }
 
     [Fact]
     public async Task Register_WithExistingEmail_ThrowsInvalidOperationException()
     {
-
         var db = CreateDbContext();
         var userManager = CreateUserManagerMock();
         var jwt = new Mock<IJwtService>();
@@ -88,13 +83,11 @@ public sealed class AuthServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.Register(request, CancellationToken.None));
-
     }
 
     [Fact]
     public async Task Login_WithBadPassword_ThrowsUnauthorizedAccessException()
     {
-
         var db = CreateDbContext();
         var userManager = CreateUserManagerMock();
         var jwt = new Mock<IJwtService>();
@@ -113,6 +106,5 @@ public sealed class AuthServiceTests
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => service.Login(request, CancellationToken.None));
-
     }
 }

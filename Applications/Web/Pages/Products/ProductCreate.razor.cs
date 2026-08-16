@@ -23,15 +23,13 @@ public partial class ProductCreate : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-
         await Localization.LoadNamespace("products");
-        _loading = false;
 
+        _loading = false;
     }
 
     private async Task Submit()
     {
-
         _submitting = true;
         _error = null;
 
@@ -63,7 +61,6 @@ public partial class ProductCreate : ComponentBase
         {
             _submitting = false;
         }
-
     }
 
     private void Cancel() => Navigation.NavigateTo("/products");
