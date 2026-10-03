@@ -14,6 +14,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser, Applicatio
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Right> Rights => Set<Right>();
+    public DbSet<RoleRight> RoleRights => Set<RoleRight>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

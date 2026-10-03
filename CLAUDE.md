@@ -11,7 +11,7 @@ Full conventions in `AGENTS.md` (start with its "For AI Agents — Start Here" s
 | API | ASP.NET Core 10 |
 | Frontend | Blazor WebAssembly 10 + Tailwind CSS v4 |
 | DB | SQL Server / PostgreSQL, EF Core 10 |
-| Auth | ASP.NET Identity + JWT |
+| Auth | ASP.NET Identity + JWT + database-backed role rights |
 | Jobs | Quartz.NET |
 | Validation | FluentValidation |
 | Mapping | Mapperly |

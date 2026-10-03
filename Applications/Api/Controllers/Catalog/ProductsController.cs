@@ -13,8 +13,10 @@ namespace Api.Controllers.Catalog;
 public class ProductsController(IProductService service) : AuthenticatedController
 {
     [HttpGet]
+    [HasRight(AppRights.ProductsRead)]
     [ProducesResponseType(typeof(ApiResponse<List<GetProduct>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<List<GetProduct>>>> GetProducts(CancellationToken ct)
     {
         var products = await service.GetProducts(ct);
@@ -23,9 +25,11 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     }
 
     [HttpGet("{id:guid}")]
+    [HasRight(AppRights.ProductsRead)]
     [ProducesResponseType(typeof(ApiResponse<GetProduct>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<GetProduct>>> GetProduct([FromRoute] Guid id, CancellationToken ct)
     {
         var product = await service.GetProduct(id, ct);
@@ -34,9 +38,11 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     }
 
     [HttpPost]
+    [HasRight(AppRights.ProductsWrite)]
     [ProducesResponseType(typeof(ApiResponse<GetProduct>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<GetProduct>>> PostProduct([FromBody] PostProductRequest request, CancellationToken ct)
     {
         var product = await service.PostProduct(request, ct);
@@ -45,9 +51,11 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     }
 
     [HttpPut("{id:guid}")]
+    [HasRight(AppRights.ProductsWrite)]
     [ProducesResponseType(typeof(ApiResponse<GetProduct>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<GetProduct>>> PutProduct([FromRoute] Guid id, [FromBody] PutProductRequest request, CancellationToken ct)
     {
@@ -57,9 +65,11 @@ public class ProductsController(IProductService service) : AuthenticatedControll
     }
 
     [HttpDelete("{id:guid}")]
+    [HasRight(AppRights.ProductsWrite)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse>> DeleteProduct([FromRoute] Guid id, CancellationToken ct)
     {
         await service.DeleteProduct(id, ct);

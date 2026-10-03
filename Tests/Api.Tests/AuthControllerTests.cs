@@ -51,7 +51,7 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
     [Fact]
     public async Task PostRegister_WithValidRequest_ReturnsToken()
     {
-        await _factory.SeedRoles();
+        await _factory.SeedAuthorization();
 
         var request = new PostAuthRegisterRequest
         {
@@ -71,9 +71,32 @@ public sealed class AuthControllerTests : IClassFixture<WebAppFactory>
     }
 
     [Fact]
+    public async Task PostRegister_WithExistingEmail_ReturnsGenericFailure()
+    {
+        await _factory.SeedAuthorization();
+
+        var request = new PostAuthRegisterRequest
+        {
+            Email = $"duplicate-{Guid.NewGuid():N}@example.com",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!"
+        };
+
+        var created = await _client.PostAsJsonAsync("/api/auth/register", request);
+        Assert.Equal(System.Net.HttpStatusCode.Created, created.StatusCode);
+
+        var response = await _client.PostAsJsonAsync("/api/auth/register", request);
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Registration failed.", body!.Error);
+    }
+
+    [Fact]
     public async Task GetAuthMe_WithValidToken_Returns200()
     {
-        await _factory.SeedRoles();
+        await _factory.SeedAuthorization();
 
         var request = new PostAuthRegisterRequest
         {

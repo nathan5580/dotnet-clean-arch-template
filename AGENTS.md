@@ -36,7 +36,7 @@ Scalar API docs: `http://localhost:5050/docs/v1`.
 4. **Validator** — `Shared/Resources/Validators/Widget/` : `public sealed class PostWidgetRequestValidator : AbstractValidator<PostWidgetRequest>`.
 5. **Mapper** — `Shared/Mapping/Widget/` : `[Mapper] public sealed partial class WidgetMapper : IWidgetMapper`.
 6. **Service** — `Shared/Services/Widget/WidgetService.cs` : `IWidgetService` + `public sealed class WidgetService(...) : IWidgetService` (primary ctor, `ConfigureAwait(false)`, `ct` last).
-7. **Controller** — `Applications/Api/Controllers/Widget/WidgetController.cs` : `public class WidgetController(...) : AuthenticatedController` (not sealed; inherits `[Authorize]` + `CurrentUserId`), returns `ApiResponse<T>`, `[ProducesResponseType]` on every action, no try/catch. (Public controllers may stay on `ControllerBase` via the allow-list — see Architecture Tests.)
+7. **Controller** — `Applications/Api/Controllers/Widget/WidgetController.cs` : `public class WidgetController(...) : AuthenticatedController` (not sealed; inherits `[Authorize]` + `CurrentUserId`), returns `ApiResponse<T>`, `[ProducesResponseType]` on every action, no try/catch. Apply `[HasRight(AppRights.WidgetRead)]` (or the matching write right) to actions requiring a specific grant. (Public controllers may stay on `ControllerBase` via the allow-list — see Architecture Tests.)
 8. **Register** — add `services.AddScoped<IWidgetService, WidgetService>();` and `services.AddScoped<IWidgetMapper, WidgetMapper>();` in `ServiceExtensions`.
 9. **Migration** — `dotnet ef migrations add AddWidget --project Applications/Api --startup-project Applications/Api --output-dir Data/Migrations`.
 10. **Tests** — unit (`Tests/Shared.Tests`) + integration (`Tests/Api.Tests`), names `Method_Scenario_Expected`.
@@ -56,7 +56,7 @@ A single deployable: an **ASP.NET Core 10 Web API** (`Api`) that co-hosts a **Bl
 {{ProjectName}}/
 ├── Applications/
 │   ├── Api/                          # ASP.NET Core Web API (co-hosts Blazor WASM)
-│   │   ├── Authorization/            # AuthenticatedController (authorized base)
+│   │   ├── Authorization/            # Authenticated base, dynamic right policies and handler
 │   │   ├── Controllers/              # Organized by bounded context subfolder
 │   │   ├── Extensions/               # Service registration, middleware pipeline, seeding
 │   │   ├── Middleware/               # ExceptionMiddleware
@@ -71,7 +71,7 @@ A single deployable: an **ASP.NET Core 10 Web API** (`Api`) that co-hosts a **Bl
 │       └── wwwroot/                  # Static assets + i18n locale files
 ├── Databases/
 │   ├── Core/                         # AppDbContext, Entities, Enums
-│   ├── Auth/                         # Identity EF configuration
+│   ├── Auth/                         # Identity, Right and RoleRight EF configuration
 │   ├── Catalog/                      # Product EF config — the worked showcase context
 │   └── ...per-context config projects
 ├── Shared/
@@ -147,7 +147,7 @@ Enforced by `Tests/Architecture.Tests` (Roslyn): multi-statement method-like bod
 - **No try/catch** — `ExceptionMiddleware` maps `KeyNotFoundException`→404, `InvalidOperationException`→400, `UnauthorizedAccessException`→401, anything else→500.
 - **Never inject `AppDbContext` directly** — go through a service. Inject mapper interfaces (`IAuthMapper`).
 - Explicit binding attributes (`[FromBody]`/`[FromQuery]`/`[FromRoute]`), `[ProducesResponseType]` on every action, OpenAPI tags via `OpenApiTagNames.{X}` constants (no string literals).
-- Authenticated feature controllers inherit **`AuthenticatedController`** (an `[Authorize]` base exposing `CurrentUserId`) — enforced by an Architecture.Tests rule. The bundled `AuthController` inherits `ControllerBase` directly (register/login are public; `GetMe` carries its own `[Authorize]`) and is the allow-listed exception.
+- Authenticated feature controllers inherit **`AuthenticatedController`** (an `[Authorize]` base exposing `CurrentUserId`) — enforced by an Architecture.Tests rule. Protect right-gated actions with `[HasRight(AppRights.<Right>)]`; `AuthController` inherits `ControllerBase` directly (register/login are public; `GetMe` carries its own `[Authorize]`) and is the allow-listed exception.
 
 ### Services
 
@@ -233,7 +233,7 @@ dotnet test "{{ProjectName}}.slnx"       # all suites
 
 Honest list of template compromises — know them before they bite:
 
-- **`AppDbContext.ExtraConfigurationAssemblies`** is a static, mutable list populated in `ServiceExtensions.AddDatabase` before `AddDbContext`. EF configs outside `Databases.Core` are not auto-discovered, so each context's assembly must be registered here. Consequence: `dotnet ef` design-time logs a "no `IEntityTypeConfiguration` found in Databases.Core" warning — harmless; migrations diff against the snapshot, not the live model.
+- **`AppDbContext.ExtraConfigurationAssemblies`** is a static, mutable list populated in `ServiceExtensions.AddDatabase` before `AddDbContext`. EF configs outside `Databases.Core` are not auto-discovered, so each context's assembly must be registered here; the API registers Auth and Catalog. Consequence: `dotnet ef` design-time logs a "no `IEntityTypeConfiguration` found in Databases.Core" warning — harmless; migrations diff against the snapshot, not the live model.
 - **Migrations** live in `Applications/Api/Data/Migrations` while `AppDbContext` lives in `Databases.Core` — the `MigrationsAssembly` option points EF at the Api assembly.
 - **`SeedDatabase`** swallows seeding/migration failures outside Production (logs a warning; the app still starts). In Production it rethrows — fail fast.
 
@@ -246,7 +246,7 @@ KISS means saying no. These are intentionally NOT in the template — do not add
 - No `Result<T>`/custom error types — services throw; `ExceptionMiddleware` maps to HTTP.
 - No runtime mapper — Mapperly source generation only.
 - No API versioning — add `Asp.Versioning` only when a second API version exists.
-- No refresh tokens, permission policies, or audit trail — add them with the feature that needs them (see *Extending the Template*).
+- No refresh tokens or audit trail — add them with the feature that needs them; role/right authorization is included below.
 
 ## Test Conventions
 
@@ -268,17 +268,20 @@ Databases.Core - Add Widget entity
 
 ## Extending the Template
 
-The **auth vertical is fully implemented** — use it as the worked example. The patterns after it are what production apps add next; they are **not in the template yet** — wire them in when you need them.
+The **auth vertical and dynamic role/right authorization** are implemented — use them as the reference. The patterns still not in the template are production-specific features to add when needed.
 
 ### Implemented auth (reference)
 
 - **JWT generation** — `Shared/Services/Auth/JwtService.cs` (`IJwtService`) signs an HMAC-SHA256 token with NameIdentifier/Email/Role claims and a configurable expiry; `AuthService.Register`/`Login` call it. JWT validation is wired in `AuthExtensions`, which **fails fast at startup** if `Jwt:Key` is missing/blank/<32 bytes. The shipped `appsettings.json` leaves `Jwt:Key` empty — supply it in prod via env var / secret store; `appsettings.Development.json` ships a clearly-marked dev-only key so `dotnet run` works.
+- **Registration privacy** — duplicate emails and Identity failures share a generic client error; Identity failure details are logged server-side.
 - **`AuthenticatedController`** — `Applications/Api/Authorization/AuthenticatedController.cs`: an `[Authorize]` base exposing `CurrentUserId`. Feature controllers inherit it (enforced by an Architecture.Tests rule); `AuthController` inherits `ControllerBase` and is the allow-listed public exception.
 - **Roles** — constants in `Shared/Resources/Auth/AppRoles.cs` (`SuperAdmin`, `User`), seeded idempotently on startup by `SeedExtensions`.
 
-### Richer authorization (permissions/policies)
+### Dynamic role/right authorization
 
-The template does not ship a permission system — a policy that can never pass is worse than none. Production apps add `AppPermissions` constants, a dynamic permission policy (`[HasRight(AppPermissions.X)]`), a verified-user filter (`[VerifiedUser]`), resource-access filters (`[ValidateWidgetAccess]`), and an `AppPermissions.ByRole` map under `Applications/Api/Authorization/`, and enforce "no raw role strings in `[Authorize(Roles=...)]`" with an Architecture.Tests rule.
+- `ApplicationRole` and `AspNetUserRoles` remain the Identity role store. `Auth.Right` and `Auth.RoleRight` hold stable right codes and role grants.
+- Use `[HasRight(AppRights.ProductsRead)]` or `[HasRight(AppRights.ProductsWrite)]` on controller actions. The authorization handler checks current database grants on every request, so grant and revocation changes affect existing JWTs immediately.
+- Add codes in `AppRights` and definitions/default grants in `SeedExtensions`, then apply `[HasRight(...)]`. Initial grants (`User`→read, `SuperAdmin`→read/write) are installed only when `Auth.Right` is empty; later changes belong in `Auth.RoleRight`. No admin API is included.
 
 ### Default admin & refresh tokens
 

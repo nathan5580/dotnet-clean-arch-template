@@ -58,6 +58,7 @@ public GetMe ToGetMe(ApplicationUser user)
 
 - Responses: `ApiResponse<T>.Ok / .Created / .Fail`. `[ProducesResponseType]` on every action. OpenAPI tags via `OpenApiTagNames` constants.
 - EF: singular tables, per-context schemas, enums `HasConversion<string>()`, named constraints `PK-/FK-/IX-Schema_Table_Column`, `.Select()` projections, `.AsSplitQuery()`.
+- **Authorization:** `[HasRight(AppRights.X)]` for right-gated actions; grants live in `Auth.RoleRight` and are checked per request.
 - Tests: xUnit; names `Method_Scenario_Expected`; integration via `WebApplicationFactory` + InMemory; unit via Moq + `NullLogger<T>.Instance`.
 
 ## Commits

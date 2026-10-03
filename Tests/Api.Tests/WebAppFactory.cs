@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Api.Extensions;
 using Databases.Core;
 using Databases.Core.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Shared.Resources.Auth;
 
 namespace Api.Tests;
 
@@ -85,17 +85,44 @@ public sealed class WebAppFactory : WebApplicationFactory<Api.Program>
         });
     }
 
-    // The InMemory provider can't run migrations, so the startup seeder is skipped in tests.
-    // Seed the application roles directly so registration (AddToRoleAsync) succeeds.
-    public async Task SeedRoles()
+    // The InMemory provider can't run migrations, so seed the authorization rows directly.
+    public async Task SeedAuthorization()
     {
         using var scope = Services.CreateScope();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
-        foreach (var role in new[] { AppRoles.SuperAdmin, AppRoles.User })
-        {
-            if (!await roleManager.RoleExistsAsync(role))
-                await roleManager.CreateAsync(new ApplicationRole { Name = role });
-        }
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+        await SeedExtensions.SeedAuthorization(roleManager, db);
+    }
+
+    public async Task AddRoleToUser(string userId, string roleName)
+    {
+        using var scope = Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.FindByIdAsync(userId)
+            ?? throw new InvalidOperationException($"Test user '{userId}' was not found.");
+
+        var result = await userManager.AddToRoleAsync(user, roleName);
+
+        if (!result.Succeeded)
+            throw new InvalidOperationException(string.Join(", ", result.Errors.Select(error => error.Description)));
+    }
+
+    public async Task SetRightForRole(string roleName, string rightCode, bool enabled)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+        var role = await roleManager.FindByNameAsync(roleName)
+            ?? throw new InvalidOperationException($"Test role '{roleName}' was not found.");
+        var right = await db.Rights.SingleAsync(entry => entry.Code == rightCode);
+        var assignment = await db.RoleRights.FindAsync(role.Id, right.RightId);
+
+        if (enabled && assignment is null)
+            db.RoleRights.Add(new RoleRight { RoleId = role.Id, RightId = right.RightId });
+        else if (!enabled && assignment is not null)
+            db.RoleRights.Remove(assignment);
+
+        await db.SaveChangesAsync();
     }
 }

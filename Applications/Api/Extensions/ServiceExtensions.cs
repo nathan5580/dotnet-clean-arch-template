@@ -17,6 +17,7 @@ public static class ServiceExtensions
 
         AddIdentity(services);
         services.AddAppAuthentication(configuration);
+        AddAppAuthorization(services);
         AddApplicationServices(services);
         AddValidation(services);
         AddQuartz(services, configuration);
@@ -44,6 +45,14 @@ public static class ServiceExtensions
         services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+    }
+
+    private static void AddAppAuthorization(IServiceCollection services)
+    {
+        services.AddAuthorization();
+
+        services.AddSingleton<IAuthorizationPolicyProvider, HasRightPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, HasRightHandler>();
     }
 
     private static void AddApplicationServices(IServiceCollection services)

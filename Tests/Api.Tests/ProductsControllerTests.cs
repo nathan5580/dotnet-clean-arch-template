@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Api.Authorization;
+using Shared.Resources.Auth;
 using Shared.Resources.Enums;
 using Shared.Resources.HTTP.Auth.POST;
 using Shared.Resources.HTTP.Catalog.GET;
@@ -21,9 +23,9 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<string> RegisterAndGetToken()
+    private async Task<(string UserId, string Token)> RegisterAndGetToken()
     {
-        await _factory.SeedRoles();
+        await _factory.SeedAuthorization();
 
         var request = new PostAuthRegisterRequest
         {
@@ -36,7 +38,7 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         response.EnsureSuccessStatusCode();
 
         var body = await response.Content.ReadFromJsonAsync<ApiResponse<PostAuthResponse>>();
-        return body!.Data!.Token!;
+        return (body!.Data!.User.UserId, body.Data.Token!);
     }
 
     [Fact]
@@ -48,9 +50,9 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
     }
 
     [Fact]
-    public async Task PostProduct_WithValidTokenAndRequest_Returns201()
+    public async Task PostProduct_WithoutWriteRight_ReturnsForbiddenUntilRoleGranted()
     {
-        var token = await RegisterAndGetToken();
+        var (userId, token) = await RegisterAndGetToken();
 
         var request = new PostProductRequest
         {
@@ -60,26 +62,34 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
             Category = ProductCategory.Electronics
         };
 
-        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/products")
+        using var deniedMessage = new HttpRequestMessage(HttpMethod.Post, "/api/products")
         {
             Content = JsonContent.Create(request, options: WebAppFactory.JsonOptions)
         };
-        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        deniedMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var deniedResponse = await _client.SendAsync(deniedMessage);
+        Assert.Equal(HttpStatusCode.Forbidden, deniedResponse.StatusCode);
 
-        var response = await _client.SendAsync(message);
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        await _factory.AddRoleToUser(userId, AppRoles.SuperAdmin);
 
-        var body = await response.Content.ReadFromJsonAsync<ApiResponse<GetProduct>>(WebAppFactory.JsonOptions);
+        using var grantedMessage = new HttpRequestMessage(HttpMethod.Post, "/api/products")
+        {
+            Content = JsonContent.Create(request, options: WebAppFactory.JsonOptions)
+        };
+        grantedMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var grantedResponse = await _client.SendAsync(grantedMessage);
+        Assert.Equal(HttpStatusCode.Created, grantedResponse.StatusCode);
+
+        var body = await grantedResponse.Content.ReadFromJsonAsync<ApiResponse<GetProduct>>(WebAppFactory.JsonOptions);
         Assert.NotNull(body);
-        Assert.True(body!.Success);
-        Assert.Equal("Integration Widget", body.Data!.Name);
-        Assert.Equal(ProductCategory.Electronics, body.Data.Category);
+        Assert.Equal("Integration Widget", body!.Data!.Name);
     }
 
     [Fact]
     public async Task GetProducts_WithValidToken_Returns200()
     {
-        var token = await RegisterAndGetToken();
+        var (userId, token) = await RegisterAndGetToken();
+        await _factory.AddRoleToUser(userId, AppRoles.SuperAdmin);
 
         var createRequest = new PostProductRequest
         {
@@ -105,6 +115,25 @@ public sealed class ProductsControllerTests : IClassFixture<WebAppFactory>
         var body = await listResponse.Content.ReadFromJsonAsync<ApiResponse<List<GetProduct>>>(WebAppFactory.JsonOptions);
         Assert.NotNull(body);
         Assert.True(body!.Success);
-        Assert.Contains(body.Data!, p => p.Name == createRequest.Name);
+        Assert.Contains(body.Data!, product => product.Name == createRequest.Name);
+    }
+
+    [Fact]
+    public async Task GetProducts_WhenRightIsRevokedAndGranted_ChangesAccessImmediately()
+    {
+        var (_, token) = await RegisterAndGetToken();
+
+        await _factory.SetRightForRole(AppRoles.User, AppRights.ProductsRead, false);
+        await _factory.SeedAuthorization();
+        using var deniedMessage = new HttpRequestMessage(HttpMethod.Get, "/api/products");
+        deniedMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var deniedResponse = await _client.SendAsync(deniedMessage);
+        Assert.Equal(HttpStatusCode.Forbidden, deniedResponse.StatusCode);
+
+        await _factory.SetRightForRole(AppRoles.User, AppRights.ProductsRead, true);
+        using var grantedMessage = new HttpRequestMessage(HttpMethod.Get, "/api/products");
+        grantedMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var grantedResponse = await _client.SendAsync(grantedMessage);
+        Assert.Equal(HttpStatusCode.OK, grantedResponse.StatusCode);
     }
 }

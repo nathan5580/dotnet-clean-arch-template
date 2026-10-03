@@ -28,3 +28,19 @@ public class Product
     [NotMapped]
     public Guid Id { get => ProductId; set => ProductId = value; }
 }
+
+public class Right
+{
+    public Guid RightId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
+[PrimaryKey(nameof(RoleId), nameof(RightId))]
+public class RoleRight
+{
+    public string RoleId { get; set; } = string.Empty;
+    public Guid RightId { get; set; }
+    public ApplicationRole Role { get; set; } = null!;
+    public Right Right { get; set; } = null!;
+}

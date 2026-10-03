@@ -23,7 +23,7 @@ public sealed class AuthService(
     {
         var existingUser = await userManager.FindByEmailAsync(request.Email).ConfigureAwait(false);
         if (existingUser is not null)
-            throw new InvalidOperationException("Email is already registered.");
+            throw new InvalidOperationException("Registration failed.");
 
         var user = new ApplicationUser
         {
@@ -38,10 +38,24 @@ public sealed class AuthService(
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             log.LogError("Registration failed for {Email}: {Errors}", request.Email, errors);
-            throw new InvalidOperationException($"Registration failed: {errors}");
+            throw new InvalidOperationException("Registration failed.");
         }
 
-        await userManager.AddToRoleAsync(user, AppRoles.User).ConfigureAwait(false);
+        var roleResult = await userManager.AddToRoleAsync(user, AppRoles.User).ConfigureAwait(false);
+        if (!roleResult.Succeeded)
+        {
+            var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+            log.LogError("Default role assignment failed for user {UserId}: {Errors}", user.Id, errors);
+
+            var cleanupResult = await userManager.DeleteAsync(user).ConfigureAwait(false);
+            if (!cleanupResult.Succeeded)
+            {
+                var cleanupErrors = string.Join(", ", cleanupResult.Errors.Select(e => e.Description));
+                log.LogError("Registration cleanup failed for user {UserId}: {Errors}", user.Id, cleanupErrors);
+            }
+
+            throw new InvalidOperationException("Registration failed.");
+        }
 
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         var token = jwtService.GenerateToken(user, roles);
@@ -56,14 +70,19 @@ public sealed class AuthService(
             throw new UnauthorizedAccessException("Invalid credentials.");
 
         if (!user.IsActive)
-            throw new UnauthorizedAccessException("Account is inactive.");
+            throw new UnauthorizedAccessException("Invalid credentials.");
 
         var passwordValid = await userManager.CheckPasswordAsync(user, request.Password).ConfigureAwait(false);
         if (!passwordValid)
             throw new UnauthorizedAccessException("Invalid credentials.");
 
         user.LastLoginAt = DateTime.UtcNow;
-        await userManager.UpdateAsync(user).ConfigureAwait(false);
+        var updateResult = await userManager.UpdateAsync(user).ConfigureAwait(false);
+        if (!updateResult.Succeeded)
+        {
+            var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+            log.LogWarning("Failed to update last login for user {UserId}: {Errors}", user.Id, errors);
+        }
 
         var roles = await userManager.GetRolesAsync(user).ConfigureAwait(false);
         var token = jwtService.GenerateToken(user, roles);

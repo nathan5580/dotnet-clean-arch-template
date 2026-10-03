@@ -23,11 +23,11 @@
 ```
 {{ProjectName}}/
 ├── Applications/
-│   ├── Api/                          # ASP.NET Core 10 — controllers, middleware, Quartz
+│   ├── Api/                          # ASP.NET Core 10 — controllers, authorization, middleware, Quartz
 │   └── Web/                          # Blazor WASM 10 — Tailwind v4, i18n, co-hosted
 ├── Databases/
 │   ├── Core/                         # AppDbContext, starter entities, PK pattern, enums
-│   ├── Auth/  Catalog/  …per-context  # EF Core IEntityTypeConfiguration<T> per bounded context
+│   ├── Auth/  Catalog/  …per-context  # Identity, rights, and bounded-context EF configurations
 ├── Shared/
 │   ├── Resources/                    # HTTP models (records), FluentValidation validators, enums
 │   ├── Services/                     # Business logic — sealed, primary ctors, verb-first
@@ -85,6 +85,12 @@
 | DB config | `UserConfiguration` | Per-context assembly, constraint naming, HasConversion\<string\> |
 | Entity | `Product` | `ProductId` + `[NotMapped] Id` alias; Identity entities keep the base string `Id` |
 | GlobalUsings | Per-project files | Framework-only imports — no context-specific usings |
+
+### Dynamic role/right authorization
+
+- `ApplicationRole` and `AspNetUserRoles` remain the role store; `Auth.Right` stores stable right codes and `Auth.RoleRight` stores role grants.
+- Gate controller actions with `[HasRight(AppRights.ProductsRead)]` or `[HasRight(AppRights.ProductsWrite)]`. Grants are checked against the database per request, so changes affect existing JWTs immediately.
+- Fresh databases grant `User` product-read and `SuperAdmin` product-read/product-write. There is no administration API; manage `Auth.RoleRight` rows directly.
 
 ### Frontend skeleton — Blazor WASM + Tailwind v4
 
@@ -153,7 +159,7 @@ dotnet run --project Applications/Web        # → http://localhost:5129 (standa
 open http://localhost:5050/docs/v1           # Scalar UI
 
 # 6. Tests
-dotnet test                                  # 4 test projects, convention tests included
+dotnet test                                  # API, Shared, and Architecture test suites
 ```
 
 ---
@@ -207,7 +213,7 @@ Every step follows the same verb-first naming, same file-scoped namespace, same 
 | Backend | ASP.NET Core 10 Web API |
 | Frontend | Blazor WebAssembly 10 + Tailwind CSS v4 |
 | Database | SQL Server via EF Core 10 (swap to PostgreSQL with 2 lines) |
-| Auth | ASP.NET Identity + JWT |
+| Auth | ASP.NET Identity + JWT + database-backed role rights |
 | Validation | FluentValidation (auto-discovered) |
 | Mapping | Mapperly (source generator, per context) |
 | Jobs | Quartz.NET |
