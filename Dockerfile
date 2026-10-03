@@ -23,10 +23,15 @@ WORKDIR /src
 COPY {{ProjectName}}.slnx Directory.Build.props Directory.Packages.props ./
 COPY Applications/Api/Api.csproj Applications/Api/
 COPY Applications/Web/Web.csproj Applications/Web/
-COPY Databases/*/*.csproj Databases/
-COPY Shared/*/*.csproj Shared/
+COPY Databases/Auth/Auth.csproj Databases/Auth/
+COPY Databases/Catalog/Catalog.csproj Databases/Catalog/
+COPY Databases/Core/Core.csproj Databases/Core/
+COPY Shared/Jobs/Jobs.csproj Shared/Jobs/
+COPY Shared/Mapping/Mapping.csproj Shared/Mapping/
+COPY Shared/Resources/Resources.csproj Shared/Resources/
+COPY Shared/Services/Services.csproj Shared/Services/
 
-RUN dotnet restore {{ProjectName}}.slnx
+RUN dotnet restore Applications/Api/Api.csproj
 
 COPY . .
 COPY --from=frontend /src/Applications/Web/wwwroot/css/app.css ./Applications/Web/wwwroot/css/app.css

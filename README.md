@@ -54,6 +54,7 @@
 - `Directory.Packages.props` — **central package management**, 34 NuGet packages pinned
 - `.editorconfig` — naming rules (`_underscore` fields, `I` prefix interfaces), var preferences, code styles
 - `coverlet.runsettings` — Cobertura/JSON/OpenCover output, module exclusions
+- `Applications/Web/package-lock.json` — reproducible frontend installs via `npm ci`
 - `nuget.config` — single source (`nuget.org`)
 - `.gitignore` / `.dockerignore` — production-hardened exclusions
 

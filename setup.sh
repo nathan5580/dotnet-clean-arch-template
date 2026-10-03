@@ -43,11 +43,11 @@ echo "  ProjectName  : $PROJECT_NAME"
 echo "  Description  : $DESCRIPTION"
 echo ""
 
-# ── Replace tokens in file contents ───────────────────────────────────────────
-# Use perl -pi -e for portable in-place substitution (BSD sed and GNU sed differ on -i syntax)
+# Keep user-supplied values out of Perl source so characters like `$()` and
+# backslashes in descriptions are treated as literal replacement text.
+export PROJECT_NAME DESCRIPTION
 git ls-files -z | xargs -0 perl -pi -e \
-  "s/\Q{{ProjectName}}\E/${PROJECT_NAME}/g; s/\Q{{ProjectDescription}}\E/${DESCRIPTION}/g"
-
+  's/\Q{{ProjectName}}\E/$ENV{PROJECT_NAME}/g; s/\Q{{ProjectDescription}}\E/$ENV{DESCRIPTION}/g'
 echo "  [1/2] Token replacement complete in file contents."
 
 # ── Rename the solution file ───────────────────────────────────────────────────

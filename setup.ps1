@@ -65,9 +65,10 @@ foreach ($file in $trackedFiles) {
 
     if ($null -eq $raw) { continue }
 
+    # Scriptblock replacements keep user-supplied `$` characters literal.
     $updated = $raw `
-        -replace [regex]::Escape('{{ProjectName}}'), $Name `
-        -replace [regex]::Escape('{{ProjectDescription}}'), $Description
+        -replace [regex]::Escape('{{ProjectName}}'), { $Name } `
+        -replace [regex]::Escape('{{ProjectDescription}}'), { $Description }
 
     if ($updated -ne $raw) {
         Set-Content -Path $file -Value $updated -Encoding UTF8 -NoNewline
